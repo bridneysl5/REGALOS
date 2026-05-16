@@ -1,0 +1,11 @@
+[build]
+  # Comando que Netlify debe ejecutar para construir la web
+  command = "npm run build"
+  # Carpeta que Netlify debe publicar (donde Vite guarda la web lista)
+  publish = "dist"
+
+# Redirigir todas las rutas al index.html para que funcione bien en React
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
