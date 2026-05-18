@@ -15,7 +15,9 @@ import {
   Trash2,
   Plus,
   Minus,
-  Eye
+  Eye,
+  GraduationCap,
+  User
 } from 'lucide-react';
 
 import { ALL_PRODUCTS } from './data';
@@ -26,7 +28,7 @@ import MouseHearts from './components/MouseHearts';
 
 const App = () => {
   const [view, setView] = useState('home'); // 'home' or 'shop'
-  const [activeFilter, setActiveFilter] = useState({ category: 'Todos', occasion: 'Todos' });
+  const [activeFilter, setActiveFilter] = useState({ category: 'Todos', occasion: 'Todos', search: '' });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Cart State
@@ -35,7 +37,7 @@ const App = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const categories = ['Todos', 'Sets y Gift Boxes', 'Arreglos de Flores', 'Cuadros', 'Tortas y Repostería'];
-  const occasions = ['Todos', 'Cumpleaños', 'Graducion', 'Aniversarios y Parejas', 'Para Ella', 'Para Él', 'Bodas y Compromisos', 'Nacimientos / Baby Shower'];
+  const occasions = ['Todos', 'Cumpleaños', 'Graducion', 'Aniversarios y Parejas', 'Para Ella', 'Para El', 'Bodas y Compromisos', 'Nacimientos / Baby Shower'];
 
   const filteredProducts = useMemo(() => {
     return ALL_PRODUCTS.filter(p => {
@@ -43,13 +45,15 @@ const App = () => {
         (Array.isArray(p.category) ? p.category.includes(activeFilter.category) : p.category === activeFilter.category);
       const matchOcc = activeFilter.occasion === 'Todos' ||
         (Array.isArray(p.occasion) ? p.occasion.includes(activeFilter.occasion) : p.occasion === activeFilter.occasion);
-      return matchCat && matchOcc;
+      const matchSearch = !activeFilter.search || activeFilter.search.trim() === '' || 
+        p.name.toLowerCase().includes(activeFilter.search.toLowerCase());
+      return matchCat && matchOcc && matchSearch;
     });
   }, [activeFilter]);
 
   const navigateToShop = (type, value) => {
     if (view === 'home') {
-      setActiveFilter({ category: 'Todos', occasion: 'Todos', [type]: value });
+      setActiveFilter({ category: 'Todos', occasion: 'Todos', search: '', [type]: value });
     } else {
       setActiveFilter({ ...activeFilter, [type]: value });
     }
@@ -208,23 +212,23 @@ const App = () => {
         </section>
 
         {/* Featured Categories (Circular) */}
-        <section className="py-16 max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <section className="py-12 max-w-7xl mx-auto px-4">
+          <div className="flex flex-wrap justify-center gap-6 md:gap-16">
             {[
-              { name: 'Cumpleaños', filterValue: 'Cumpleaños', icon: <CakeSlice size={32} className="text-rose-500" />, color: 'bg-rose-50' },
-              { name: 'Aniversario', filterValue: 'Aniversarios y Parejas', icon: <Heart size={32} className="text-rose-500" />, color: 'bg-rose-50' },
-              { name: 'Día del Padre', filterValue: 'Para Él', icon: <Star size={32} className="text-blue-500" />, color: 'bg-blue-50' },
-              { name: 'Graduación', filterValue: 'Graducion', icon: <ShoppingBag size={32} className="text-purple-500" />, color: 'bg-purple-50' },
+              { name: 'Cumpleaños', filterValue: 'Cumpleaños', icon: <CakeSlice size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-yellow-50' },
+              { name: 'Aniversario', filterValue: 'Aniversarios y Parejas', icon: <Heart size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-rose-50' },
+              { name: 'Día del Padre', filterValue: 'Para El', icon: <User size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-blue-50' },
+              { name: 'Graduación', filterValue: 'Graducion', icon: <GraduationCap size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-purple-50' },
             ].map((item) => (
               <button
                 key={item.name}
                 onClick={() => navigateToShop('occasion', item.filterValue)}
                 className="flex flex-col items-center group"
               >
-                <div className={`${item.color} p-6 rounded-full mb-4 transition-transform group-hover:scale-110 shadow-sm`}>
+                <div className={`${item.bg} w-20 h-20 md:w-24 md:h-24 rounded-full mb-3 flex items-center justify-center transition-transform duration-300 group-hover:scale-105`}>
                   {item.icon}
                 </div>
-                <span className="font-semibold text-gray-700">{item.name}</span>
+                <span className="font-medium text-sm text-gray-600 tracking-wide">{item.name}</span>
               </button>
             ))}
           </div>
@@ -241,10 +245,10 @@ const App = () => {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
               {[
-                { name: 'Sets y Gift Boxes', label: 'Sets y Gift Boxes', img: 'https://images.unsplash.com/photo-1549465220-1d8c9d9c4709?w=400&h=600&fit=crop' },
-                { name: 'Arreglos de Flores', label: 'Arreglos de Flores', img: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=400&h=600&fit=crop' },
-                { name: 'Cuadros y Regalos Personalizados', label: 'Regalos Personalizados', img: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=400&h=600&fit=crop' },
-                { name: 'Tortas y Repostería', label: 'Tortas y Repostería', img: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=600&fit=crop' },
+                { name: 'Sets y Gift Boxes', label: 'Sets y Gift Boxes', img: ALL_PRODUCTS.find(p => p.category?.includes('Sets y Gift Boxes'))?.img },
+                { name: 'Arreglos de Flores', label: 'Arreglos de Flores', img: ALL_PRODUCTS.find(p => p.category?.includes('Arreglos de Flores'))?.img },
+                { name: 'Cuadros', label: 'Cuadros', img: ALL_PRODUCTS.find(p => p.category?.includes('Cuadros'))?.img },
+                { name: 'Tortas y Repostería', label: 'Tortas y Repostería', img: ALL_PRODUCTS.find(p => p.category?.includes('Tortas y Repostería'))?.img },
               ].map((cat) => (
                 <div
                   key={cat.name}
@@ -288,15 +292,16 @@ const App = () => {
     <div className="animate-in fade-in duration-500 py-8 max-w-7xl mx-auto px-4">
       {/* Mobile Top Bar */}
       <div className="md:hidden bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 flex flex-col gap-3">
-        <select
-          value={activeFilter.category}
-          onChange={(e) => setActiveFilter({ ...activeFilter, category: e.target.value })}
-          className="bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-rose-500 focus:border-rose-500 block w-full p-3 outline-none cursor-pointer"
-        >
-          <option value="Todos">Todas las Categorías</option>
-          {categories.filter(c => c !== 'Todos').map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-
+        <div className="relative">
+          <input 
+            type="text" 
+            placeholder="Buscar productos..."
+            value={activeFilter.search || ''}
+            onChange={(e) => setActiveFilter({ ...activeFilter, search: e.target.value })}
+            className="bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-rose-500 focus:border-rose-500 block w-full p-3 pl-10 outline-none"
+          />
+          <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        </div>
         <select
           value={activeFilter.occasion}
           onChange={(e) => setActiveFilter({ ...activeFilter, occasion: e.target.value })}
@@ -304,6 +309,15 @@ const App = () => {
         >
           <option value="Todos">Todas las Ocasiones</option>
           {occasions.filter(o => o !== 'Todos').map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+
+        <select
+          value={activeFilter.category}
+          onChange={(e) => setActiveFilter({ ...activeFilter, category: e.target.value })}
+          className="bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-rose-500 focus:border-rose-500 block w-full p-3 outline-none cursor-pointer"
+        >
+          <option value="Todos">Todas las Categorías</option>
+          {categories.filter(c => c !== 'Todos').map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
 
