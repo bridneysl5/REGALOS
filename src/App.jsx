@@ -37,7 +37,7 @@ const App = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const categories = ['Todos', 'Sets y Gift Boxes', 'Arreglos de Flores', 'Cuadros', 'Tortas y Repostería'];
-  const occasions = ['Todos', 'Cumpleaños', 'Graducion', 'Aniversarios y Parejas', 'Para Ella', 'Para El', 'Bodas y Compromisos', 'Nacimientos / Baby Shower'];
+  const occasions = ['Todos', 'Cumpleaños', 'Graduación', 'Aniversarios y Parejas', 'Para Ella', 'Día del Padre', 'Nacimientos'];
 
   const filteredProducts = useMemo(() => {
     return ALL_PRODUCTS.filter(p => {
@@ -218,8 +218,8 @@ const App = () => {
             {[
               { name: 'Cumpleaños', filterValue: 'Cumpleaños', icon: <CakeSlice size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-yellow-50' },
               { name: 'Aniversario', filterValue: 'Aniversarios y Parejas', icon: <Heart size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-rose-50' },
-              { name: 'Día del Padre', filterValue: 'Para El', icon: <User size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-blue-50' },
-              { name: 'Graduación', filterValue: 'Graducion', icon: <GraduationCap size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-purple-50' },
+              { name: 'Día del Padre', filterValue: 'Día del Padre', icon: <User size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-blue-50' },
+              { name: 'Graduación', filterValue: 'Graduación', icon: <GraduationCap size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-purple-50' },
             ].map((item) => (
               <button
                 key={item.name}
