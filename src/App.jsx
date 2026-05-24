@@ -198,6 +198,7 @@ const App = () => {
                   src={img}
                   alt={`Slide ${index + 1}`}
                   className="w-full h-full object-cover rounded-3xl border-[12px] md:border-[16px] border-white shadow-xl"
+                  loading="lazy"
                 />
               </div>
             ))}
@@ -256,7 +257,7 @@ const App = () => {
                   className="flex flex-col items-center cursor-pointer group"
                 >
                   <div className="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden mb-4 shadow-md transition-transform duration-300 group-hover:scale-105 group-hover:shadow-xl border-4 border-white">
-                    <img src={cat.img} className="w-full h-full object-cover" alt={cat.label} />
+                    <img src={cat.img} className="w-full h-full object-cover" alt={cat.label} loading="lazy" />
                   </div>
                   <h3 className="text-center text-gray-800 font-bold text-sm md:text-base px-2">{cat.label}</h3>
                 </div>
@@ -467,7 +468,7 @@ const App = () => {
           ) : (
             cart.map(item => (
               <div key={item.id} className="flex gap-4 p-4 bg-white border border-gray-100 rounded-2xl shadow-sm">
-                <img src={item.img} alt={item.name} className="w-20 h-20 object-cover rounded-xl" />
+                <img src={item.img} alt={item.name} className="w-20 h-20 object-cover rounded-xl" loading="lazy" />
                 <div className="flex-1 flex flex-col justify-between">
                   <div className="flex justify-between items-start">
                     <h3 className="font-bold text-gray-800 text-sm leading-tight pr-2">{item.name}</h3>
@@ -530,6 +531,7 @@ const App = () => {
                 src={selectedProduct.img}
                 alt={selectedProduct.name}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
 

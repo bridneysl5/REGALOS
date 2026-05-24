@@ -27,6 +27,7 @@ const ProductCard = ({ product, addToCart, setSelectedProduct }) => {
           src={product.img} 
           alt={product.name}
           className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
+          loading="lazy"
         />
         
         {/* Top Left Badge */}
