@@ -31,8 +31,19 @@ import MouseHearts from './components/MouseHearts';
 import Admin from './components/Admin';
 
 const App = () => {
-  const [view, setView] = useState(() => window.location.pathname === '/admin' ? 'admin' : 'home'); // 'home', 'shop' or 'admin'
-  const [activeFilter, setActiveFilter] = useState({ category: 'Todos', occasion: 'Todos', search: '' });
+  const [view, setView] = useState(() => {
+    if (window.location.pathname === '/admin') return 'admin';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('view') || 'home';
+  });
+  const [activeFilter, setActiveFilter] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      category: params.get('category') || 'Todos',
+      occasion: params.get('occasion') || 'Todos',
+      search: params.get('search') || ''
+    };
+  });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Cart State
@@ -52,19 +63,43 @@ const App = () => {
 
   useEffect(() => {
     const url = new URL(window.location);
+    let changed = false;
+
+    const setParam = (key, value) => {
+      if (url.searchParams.get(key) !== value) {
+        url.searchParams.set(key, value);
+        changed = true;
+      }
+    };
+    const delParam = (key) => {
+      if (url.searchParams.has(key)) {
+        url.searchParams.delete(key);
+        changed = true;
+      }
+    };
+
+    if (view === 'shop') setParam('view', 'shop');
+    else delParam('view');
+
+    if (activeFilter.category !== 'Todos') setParam('category', activeFilter.category);
+    else delParam('category');
+
+    if (activeFilter.occasion !== 'Todos') setParam('occasion', activeFilter.occasion);
+    else delParam('occasion');
+
+    if (activeFilter.search) setParam('search', activeFilter.search);
+    else delParam('search');
+
     if (selectedProduct) {
-      const slug = selectedProduct.name.toLowerCase().replace(/\s+/g, '-');
-      if (url.searchParams.get('product') !== slug) {
-        url.searchParams.set('product', slug);
-        window.history.replaceState({}, '', url);
-      }
+      setParam('product', selectedProduct.name.toLowerCase().replace(/\s+/g, '-'));
     } else {
-      if (url.searchParams.has('product')) {
-        url.searchParams.delete('product');
-        window.history.replaceState({}, '', url);
-      }
+      delParam('product');
     }
-  }, [selectedProduct]);
+
+    if (changed) {
+      window.history.replaceState({}, '', url);
+    }
+  }, [view, activeFilter, selectedProduct]);
 
   const categories = ['Todos', 'Sets y Gift Boxes', 'Arreglos de Flores', 'Cuadros', 'Tortas y Repostería'];
   const occasions = ['Todos', 'Cumpleaños', 'Graduación', 'Aniversarios y Parejas', 'Para Ella', 'Día del Padre', 'Nacimientos'];
@@ -164,8 +199,8 @@ const App = () => {
           </div>
 
           <div className="hidden md:flex space-x-8">
-            <button onClick={() => { setView('home'); window.history.pushState({}, '', '/'); }} className="text-gray-600 hover:text-rose-500 font-medium transition">Inicio</button>
-            <button onClick={() => { navigateToShop('category', 'Todos'); window.history.pushState({}, '', '/'); }} className="text-gray-600 hover:text-rose-500 font-medium transition">Catálogo</button>
+            <button onClick={() => setView('home')} className="text-gray-600 hover:text-rose-500 font-medium transition">Inicio</button>
+            <button onClick={() => navigateToShop('category', 'Todos')} className="text-gray-600 hover:text-rose-500 font-medium transition">Catálogo</button>
             <div className="relative group">
               <button className="text-gray-600 hover:text-rose-500 font-medium transition flex items-center">
                 Ocasiones <ChevronRight size={16} className="rotate-90 ml-1" />
@@ -446,8 +481,8 @@ const App = () => {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-b border-gray-100 p-4 space-y-4 animate-in slide-in-from-top duration-300">
-          <button onClick={() => { setView('home'); window.history.pushState({}, '', '/'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Inicio</button>
-          <button onClick={() => { setView('shop'); window.history.pushState({}, '', '/'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Catálogo</button>
+          <button onClick={() => { setView('home'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Inicio</button>
+          <button onClick={() => { setView('shop'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Catálogo</button>
           <div className="pt-2 border-t border-gray-50">
             <p className="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">Categorías</p>
             {categories.slice(1).map(c => (
