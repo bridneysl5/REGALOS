@@ -18,7 +18,9 @@ import {
   Eye,
   GraduationCap,
   User,
-  Settings
+  Settings,
+  Share2,
+  Check
 } from 'lucide-react';
 
 import { ALL_PRODUCTS } from './data';
@@ -36,7 +38,33 @@ const App = () => {
   // Cart State
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const productParam = params.get('product');
+    if (productParam) {
+      return ALL_PRODUCTS.find(
+        p => p.id.toString() === productParam || p.name.toLowerCase().replace(/\s+/g, '-') === productParam.toLowerCase()
+      ) || null;
+    }
+    return null;
+  });
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const url = new URL(window.location);
+    if (selectedProduct) {
+      const slug = selectedProduct.name.toLowerCase().replace(/\s+/g, '-');
+      if (url.searchParams.get('product') !== slug) {
+        url.searchParams.set('product', slug);
+        window.history.replaceState({}, '', url);
+      }
+    } else {
+      if (url.searchParams.has('product')) {
+        url.searchParams.delete('product');
+        window.history.replaceState({}, '', url);
+      }
+    }
+  }, [selectedProduct]);
 
   const categories = ['Todos', 'Sets y Gift Boxes', 'Arreglos de Flores', 'Cuadros', 'Tortas y Repostería'];
   const occasions = ['Todos', 'Cumpleaños', 'Graduación', 'Aniversarios y Parejas', 'Para Ella', 'Día del Padre', 'Nacimientos'];
@@ -593,7 +621,7 @@ const App = () => {
                 </ul>
               </div>
 
-              <div className="mt-auto pt-6 border-t border-gray-100">
+              <div className="mt-auto pt-6 border-t border-gray-100 flex flex-col gap-3">
                 <button
                   onClick={() => {
                     addToCart(selectedProduct);
@@ -603,6 +631,17 @@ const App = () => {
                 >
                   <ShoppingBag size={20} />
                   Agregar al Carrito
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition"
+                >
+                  {copied ? <Check size={20} /> : <Share2 size={20} />}
+                  {copied ? 'Enlace copiado' : 'Compartir enlace'}
                 </button>
               </div>
             </div>
