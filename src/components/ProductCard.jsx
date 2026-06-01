@@ -65,9 +65,9 @@ const ProductCard = ({ product, addToCart, setSelectedProduct }) => {
         <h4 className="font-serif font-bold text-gray-900 text-lg leading-tight group-hover:text-rose-500 transition-colors">
           {product.name}
         </h4>
-        <span className="text-base font-bold text-rose-600">
+        {/* <span className="text-base font-bold text-rose-600">
           S/ {product.price.toFixed(2)}
-        </span>
+        </span> */}
       </div>
     </div>
   );

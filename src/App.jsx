@@ -172,11 +172,13 @@ const App = () => {
     let message = 'Hola MOMENTOS me gustaría solicitar el siguiente pedido: \n';
 
     cart.forEach(item => {
-      const subtotal = item.price * item.qty;
-      message += `*${item.qty}x ${item.name}* \nPrecio unitario: S/${item.price.toFixed(2)} \n*Subtotal:* S/ ${subtotal.toFixed(2)} \n\n`;
+      // const subtotal = item.price * item.qty;
+      // message += `*${item.qty}x ${item.name}* \nPrecio unitario: S/${item.price.toFixed(2)} \n*Subtotal:* S/ ${subtotal.toFixed(2)} \n\n`;
+      message += `*${item.qty}x ${item.name}* \n\n`;
     });
 
-    message += `*TOTAL ESTIMADO:* S/ ${cartTotal.toFixed(2)} \n\nPor favor envíenme los detalles para realizar el pago.`;
+    // message += `*TOTAL ESTIMADO:* S/ ${cartTotal.toFixed(2)} \n\nPor favor envíenme los detalles para realizar el pago.`;
+    message += `Por favor envíenme los detalles para consultar el precio y realizar el pago.`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/51916098803?text=${encodedMessage}`, '_blank');
@@ -242,6 +244,18 @@ const App = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const sliderImages = useMemo(() => {
       return [...ALL_PRODUCTS].sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0)).slice(0, 5).map(p => p.img);
+    }, []);
+
+    const featuredProducts = useMemo(() => {
+      const cheapest = [...ALL_PRODUCTS].sort((a, b) => a.price - b.price).slice(0, 2);
+      const starWars3 = ALL_PRODUCTS.find(p => p.id === 12);
+      const bestPadre1 = ALL_PRODUCTS.find(p => p.id === 8);
+      
+      const products = [...cheapest];
+      if (starWars3 && !products.find(p => p.id === starWars3.id)) products.push(starWars3);
+      if (bestPadre1 && !products.find(p => p.id === bestPadre1.id)) products.push(bestPadre1);
+      
+      return products.slice(0, 4);
     }, []);
 
     useEffect(() => {
@@ -355,7 +369,7 @@ const App = () => {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[...ALL_PRODUCTS].sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0)).slice(0, 4).map(product => (
+            {featuredProducts.map(product => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -562,7 +576,7 @@ const App = () => {
                       <span className="font-medium text-sm w-4 text-center">{item.qty}</span>
                       <button onClick={() => updateQuantity(item.id, 1)} className="text-gray-500 hover:text-rose-500"><Plus size={14} /></button>
                     </div>
-                    <span className="font-bold text-rose-500">S/ {(item.price * item.qty).toFixed(2)}</span>
+                    {/* <span className="font-bold text-rose-500">S/ {(item.price * item.qty).toFixed(2)}</span> */}
                   </div>
                 </div>
               </div>
@@ -574,7 +588,7 @@ const App = () => {
           <div className="p-6 border-t border-gray-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
             <div className="flex justify-between items-center mb-6">
               <span className="font-bold text-gray-600">Total Estimado</span>
-              <span className="text-2xl font-black text-rose-500">S/ {cartTotal.toFixed(2)}</span>
+              {/* <span className="text-2xl font-black text-rose-500">S/ {cartTotal.toFixed(2)}</span> */}
             </div>
             <button
               onClick={sendWhatsAppOrder}
@@ -630,9 +644,9 @@ const App = () => {
                 {selectedProduct.name}
               </h2>
 
-              <p className="text-4xl font-black text-rose-500 mb-6">
+              {/* <p className="text-4xl font-black text-rose-500 mb-6">
                 S/ {selectedProduct.price.toFixed(2)}
-              </p>
+              </p> */}
 
               <div className="prose prose-sm text-gray-600 mb-8">
                 <p className="leading-relaxed">
