@@ -635,25 +635,32 @@ const App = () => {
               </p>
 
               <div className="prose prose-sm text-gray-600 mb-8">
-                <p>
-                  {selectedProduct.description || `Un detalle especial y único, cuidadosamente elaborado para sorprender. Ideal para ${(Array.isArray(selectedProduct.occasion) ? selectedProduct.occasion[0] || 'cualquier ocasión' : selectedProduct.occasion).toLowerCase()} y hacer de cada momento algo verdaderamente inolvidable.`}
+                <p className="leading-relaxed">
+                  {selectedProduct.description || `¡Un detalle personalizado y hecho con muchísimo amor! ✨ Ideal para ${(Array.isArray(selectedProduct.occasion) ? selectedProduct.occasion[0] || 'cualquier ocasión' : selectedProduct.occasion).toLowerCase()}.`}
                 </p>
-                <ul className="mt-4 space-y-2">
-                  {selectedProduct.details && selectedProduct.details.length > 0 ? (
-                    selectedProduct.details.map((detail, idx) => (
-                      <li key={idx} className="flex items-center gap-2">
-                        <Star size={16} className="text-rose-400 shrink-0" /> 
-                        <span>{detail}</span>
-                      </li>
-                    ))
-                  ) : (
-                    <>
-                      <li className="flex items-center gap-2"><Heart size={16} className="text-rose-400 shrink-0" /> Hecho con amor y dedicación</li>
-                      <li className="flex items-center gap-2"><Gift size={16} className="text-rose-400 shrink-0" /> Empaque premium incluido</li>
-                      <li className="flex items-center gap-2"><Star size={16} className="text-rose-400 shrink-0" /> Calidad garantizada</li>
-                    </>
-                  )}
-                </ul>
+                
+                <div className="mt-6 bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <Gift size={18} className="text-rose-500" />
+                    ¿Qué contiene este detalle?
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {selectedProduct.details && selectedProduct.details.length > 0 ? (
+                      selectedProduct.details.map((detail, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-gray-700">
+                          <Check size={16} className="text-rose-500 shrink-0 mt-0.5" /> 
+                          <span className="leading-tight">{detail}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <>
+                        <li className="flex items-start gap-2.5 text-gray-700"><Check size={16} className="text-rose-500 shrink-0 mt-0.5" /> <span className="leading-tight">Elementos decorativos premium</span></li>
+                        <li className="flex items-start gap-2.5 text-gray-700"><Check size={16} className="text-rose-500 shrink-0 mt-0.5" /> <span className="leading-tight">Empaque de regalo exclusivo</span></li>
+                        <li className="flex items-start gap-2.5 text-gray-700"><Check size={16} className="text-rose-500 shrink-0 mt-0.5" /> <span className="leading-tight">Tarjeta dedicatoria personalizada</span></li>
+                      </>
+                    )}
+                  </ul>
+                </div>
               </div>
 
               <div className="mt-auto pt-6 border-t border-gray-100 flex flex-col gap-3">
