@@ -17,7 +17,8 @@ import {
   Minus,
   Eye,
   GraduationCap,
-  User
+  User,
+  Settings
 } from 'lucide-react';
 
 import { ALL_PRODUCTS } from './data';
@@ -25,9 +26,10 @@ import ProductCard from './components/ProductCard';
 import Filters from './components/Filters';
 import ProductGrid from './components/ProductGrid';
 import MouseHearts from './components/MouseHearts';
+import Admin from './components/Admin';
 
 const App = () => {
-  const [view, setView] = useState('home'); // 'home' or 'shop'
+  const [view, setView] = useState(() => window.location.pathname === '/admin' ? 'admin' : 'home'); // 'home', 'shop' or 'admin'
   const [activeFilter, setActiveFilter] = useState({ category: 'Todos', occasion: 'Todos', search: '' });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -40,7 +42,7 @@ const App = () => {
   const occasions = ['Todos', 'Cumpleaños', 'Graduación', 'Aniversarios y Parejas', 'Para Ella', 'Día del Padre', 'Nacimientos'];
 
   const filteredProducts = useMemo(() => {
-    return ALL_PRODUCTS.filter(p => {
+    let result = ALL_PRODUCTS.filter(p => {
       const matchCat = activeFilter.category === 'Todos' ||
         (Array.isArray(p.category) ? p.category.includes(activeFilter.category) : p.category === activeFilter.category);
       const matchOcc = activeFilter.occasion === 'Todos' ||
@@ -49,6 +51,19 @@ const App = () => {
         p.name.toLowerCase().includes(activeFilter.search.toLowerCase());
       return matchCat && matchOcc && matchSearch;
     });
+
+    result.sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0));
+
+    if (activeFilter.category === 'Todos' && activeFilter.occasion !== 'Todos') {
+      const cheapSelected = result.filter(p => p.isCheap);
+      if (cheapSelected.length > 0) {
+        const top3Cheap = [...cheapSelected].sort((a, b) => a.price - b.price).slice(0, 3);
+        const rest = result.filter(p => !top3Cheap.some(c => c.id === p.id));
+        result = [...top3Cheap, ...rest];
+      }
+    }
+
+    return result;
   }, [activeFilter]);
 
   const navigateToShop = (type, value) => {
@@ -121,8 +136,8 @@ const App = () => {
           </div>
 
           <div className="hidden md:flex space-x-8">
-            <button onClick={() => setView('home')} className="text-gray-600 hover:text-rose-500 font-medium transition">Inicio</button>
-            <button onClick={() => navigateToShop('category', 'Todos')} className="text-gray-600 hover:text-rose-500 font-medium transition">Catálogo</button>
+            <button onClick={() => { setView('home'); window.history.pushState({}, '', '/'); }} className="text-gray-600 hover:text-rose-500 font-medium transition">Inicio</button>
+            <button onClick={() => { navigateToShop('category', 'Todos'); window.history.pushState({}, '', '/'); }} className="text-gray-600 hover:text-rose-500 font-medium transition">Catálogo</button>
             <div className="relative group">
               <button className="text-gray-600 hover:text-rose-500 font-medium transition flex items-center">
                 Ocasiones <ChevronRight size={16} className="rotate-90 ml-1" />
@@ -162,7 +177,9 @@ const App = () => {
 
   const HomeView = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
-    const sliderImages = useMemo(() => ALL_PRODUCTS.slice(0, 5).map(p => p.img), []);
+    const sliderImages = useMemo(() => {
+      return [...ALL_PRODUCTS].sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0)).slice(0, 5).map(p => p.img);
+    }, []);
 
     useEffect(() => {
       const timer = setInterval(() => {
@@ -275,7 +292,7 @@ const App = () => {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {ALL_PRODUCTS.slice(0, 4).map(product => (
+            {[...ALL_PRODUCTS].sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0)).slice(0, 4).map(product => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -401,8 +418,8 @@ const App = () => {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-b border-gray-100 p-4 space-y-4 animate-in slide-in-from-top duration-300">
-          <button onClick={() => { setView('home'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Inicio</button>
-          <button onClick={() => { setView('shop'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Catálogo</button>
+          <button onClick={() => { setView('home'); window.history.pushState({}, '', '/'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Inicio</button>
+          <button onClick={() => { setView('shop'); window.history.pushState({}, '', '/'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Catálogo</button>
           <div className="pt-2 border-t border-gray-50">
             <p className="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">Categorías</p>
             {categories.slice(1).map(c => (
@@ -412,7 +429,7 @@ const App = () => {
         </div>
       )}
 
-      {view === 'home' ? <HomeView /> : <ShopView />}
+      {view === 'admin' ? <Admin /> : view === 'home' ? <HomeView /> : <ShopView />}
 
       <Footer />
 
@@ -556,14 +573,23 @@ const App = () => {
 
               <div className="prose prose-sm text-gray-600 mb-8">
                 <p>
-                  Un detalle especial y único, cuidadosamente elaborado para sorprender.
-                  Ideal para {(Array.isArray(selectedProduct.occasion) ? selectedProduct.occasion[0] : selectedProduct.occasion).toLowerCase()} y hacer de cada momento
-                  algo verdaderamente inolvidable.
+                  {selectedProduct.description || `Un detalle especial y único, cuidadosamente elaborado para sorprender. Ideal para ${(Array.isArray(selectedProduct.occasion) ? selectedProduct.occasion[0] || 'cualquier ocasión' : selectedProduct.occasion).toLowerCase()} y hacer de cada momento algo verdaderamente inolvidable.`}
                 </p>
                 <ul className="mt-4 space-y-2">
-                  <li className="flex items-center gap-2"><Heart size={16} className="text-rose-400" /> Hecho con amor y dedicación</li>
-                  <li className="flex items-center gap-2"><Gift size={16} className="text-rose-400" /> Empaque premium incluido</li>
-                  <li className="flex items-center gap-2"><Star size={16} className="text-rose-400" /> Calidad garantizada</li>
+                  {selectedProduct.details && selectedProduct.details.length > 0 ? (
+                    selectedProduct.details.map((detail, idx) => (
+                      <li key={idx} className="flex items-center gap-2">
+                        <Star size={16} className="text-rose-400 shrink-0" /> 
+                        <span>{detail}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <>
+                      <li className="flex items-center gap-2"><Heart size={16} className="text-rose-400 shrink-0" /> Hecho con amor y dedicación</li>
+                      <li className="flex items-center gap-2"><Gift size={16} className="text-rose-400 shrink-0" /> Empaque premium incluido</li>
+                      <li className="flex items-center gap-2"><Star size={16} className="text-rose-400 shrink-0" /> Calidad garantizada</li>
+                    </>
+                  )}
                 </ul>
               </div>
 

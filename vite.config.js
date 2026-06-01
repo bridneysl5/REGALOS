@@ -90,6 +90,60 @@ function autoUpdateDataPlugin() {
           updateDataJs();
         }
       });
+      
+      // API local para guardar cambios del panel de administrador
+      server.middlewares.use('/api/update-product', (req, res) => {
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => body += chunk.toString());
+          req.on('end', () => {
+            try {
+              const { id, name, price, category, occasion, isTop, isCheap, description, details } = JSON.parse(body);
+              const dataFile = path.resolve(__dirname, 'src/data.js');
+              let content = fs.readFileSync(dataFile, 'utf-8');
+              
+              const lines = content.split('\n');
+              const newLines = lines.map(line => {
+                const idMatch = line.match(/id:\s*(\d+)/);
+                if (idMatch && parseInt(idMatch[1]) === id) {
+                  try {
+                    const objStr = line.trim().replace(/,$/, '');
+                    const obj = (new Function(`return ${objStr}`))();
+                    
+                    if (name !== undefined) obj.name = name;
+                    if (price !== undefined) obj.price = price;
+                    if (category !== undefined) obj.category = category;
+                    if (occasion !== undefined) obj.occasion = occasion;
+                    if (isTop !== undefined) obj.isTop = isTop;
+                    if (isCheap !== undefined) obj.isCheap = isCheap;
+                    if (description !== undefined) obj.description = description;
+                    if (details !== undefined) obj.details = details;
+                    
+                    const stringifyObj = (o) => {
+                      const entries = Object.entries(o).map(([k, v]) => `${k}: ${JSON.stringify(v)}`);
+                      return `{ ${entries.join(', ')} }`;
+                    };
+                    
+                    return '  ' + stringifyObj(obj) + ',';
+                  } catch (e) {
+                    console.error("Error parsing line:", e);
+                    return line;
+                  }
+                }
+                return line;
+              });
+              
+              fs.writeFileSync(dataFile, newLines.join('\n'), 'utf-8');
+              
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: true }));
+            } catch(e) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ success: false, error: e.message }));
+            }
+          });
+        }
+      });
     }
   }
 }
