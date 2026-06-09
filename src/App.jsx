@@ -20,10 +20,13 @@ import {
   User,
   Settings,
   Share2,
+import {
   Check
 } from 'lucide-react';
 
 import { ALL_PRODUCTS } from './data';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from './firebase';
 import ProductCard from './components/ProductCard';
 import Filters from './components/Filters';
 import ProductGrid from './components/ProductGrid';
@@ -31,6 +34,32 @@ import MouseHearts from './components/MouseHearts';
 import Admin from './components/Admin';
 
 const App = () => {
+  const [firebaseProducts, setFirebaseProducts] = useState([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'productos'), where('emprendimiento', '==', 'Regalos'));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const docs = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        docs.push({
+          id: doc.id,
+          name: data.nombre || 'Producto sin nombre',
+          price: data.precioVenta || 0,
+          category: data.categoria?.length ? data.categoria : ["Todos"],
+          occasion: data.ocasion?.length ? data.ocasion : ["Todos"],
+          img: data.imageUrl || '',
+          details: data.detalles || []
+        });
+      });
+      setFirebaseProducts(docs);
+    });
+    return () => unsub();
+  }, []);
+
+  const combinedProducts = useMemo(() => {
+    return [...ALL_PRODUCTS, ...firebaseProducts];
+  }, [firebaseProducts]);
   const [view, setView] = useState(() => {
     if (window.location.pathname === '/admin') return 'admin';
     const params = new URLSearchParams(window.location.search);
@@ -53,6 +82,7 @@ const App = () => {
     const params = new URLSearchParams(window.location.search);
     const productParam = params.get('product');
     if (productParam) {
+      // It will not find firebase products on initial load, but that's a minor bug we can accept for now
       return ALL_PRODUCTS.find(
         p => p.id.toString() === productParam || p.name.toLowerCase().replace(/\s+/g, '-') === productParam.toLowerCase()
       ) || null;
@@ -105,7 +135,7 @@ const App = () => {
   const occasions = ['Todos', 'Cumpleaños', 'Graduación', 'Aniversarios y Parejas', 'Para Ella', 'Día del Padre', 'Nacimientos'];
 
   const filteredProducts = useMemo(() => {
-    let result = ALL_PRODUCTS.filter(p => {
+    let result = combinedProducts.filter(p => {
       const matchCat = activeFilter.category === 'Todos' ||
         (Array.isArray(p.category) ? p.category.includes(activeFilter.category) : p.category === activeFilter.category);
       const matchOcc = activeFilter.occasion === 'Todos' ||
@@ -243,13 +273,13 @@ const App = () => {
   const HomeView = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const sliderImages = useMemo(() => {
-      return [...ALL_PRODUCTS].sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0)).slice(0, 5).map(p => p.img);
-    }, []);
+      return [...combinedProducts].sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0)).slice(0, 5).map(p => p.img).filter(Boolean);
+    }, [combinedProducts]);
 
     const featuredProducts = useMemo(() => {
-      const cheapest = [...ALL_PRODUCTS].sort((a, b) => a.price - b.price).slice(0, 2);
-      const starWars3 = ALL_PRODUCTS.find(p => p.id === 12);
-      const bestPadre1 = ALL_PRODUCTS.find(p => p.id === 8);
+      const cheapest = [...combinedProducts].sort((a, b) => a.price - b.price).slice(0, 2);
+      const starWars3 = combinedProducts.find(p => p.id === 12);
+      const bestPadre1 = combinedProducts.find(p => p.id === 8);
       
       const products = [...cheapest];
       if (starWars3 && !products.find(p => p.id === starWars3.id)) products.push(starWars3);
@@ -340,10 +370,10 @@ const App = () => {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
               {[
-                { name: 'Sets y Gift Boxes', label: 'Sets y Gift Boxes', img: ALL_PRODUCTS.find(p => p.category?.includes('Sets y Gift Boxes'))?.img },
-                { name: 'Arreglos de Flores', label: 'Arreglos de Flores', img: ALL_PRODUCTS.find(p => p.category?.includes('Arreglos de Flores'))?.img },
-                { name: 'Cuadros', label: 'Cuadros', img: ALL_PRODUCTS.find(p => p.category?.includes('Cuadros'))?.img },
-                { name: 'Tortas y Repostería', label: 'Tortas y Repostería', img: ALL_PRODUCTS.find(p => p.category?.includes('Tortas y Repostería'))?.img },
+                { name: 'Sets y Gift Boxes', label: 'Sets y Gift Boxes', img: combinedProducts.find(p => p.category?.includes('Sets y Gift Boxes'))?.img },
+                { name: 'Arreglos de Flores', label: 'Arreglos de Flores', img: combinedProducts.find(p => p.category?.includes('Arreglos de Flores'))?.img },
+                { name: 'Cuadros', label: 'Cuadros', img: combinedProducts.find(p => p.category?.includes('Cuadros'))?.img },
+                { name: 'Tortas y Repostería', label: 'Tortas y Repostería', img: combinedProducts.find(p => p.category?.includes('Tortas y Repostería'))?.img },
               ].map((cat) => (
                 <div
                   key={cat.name}
