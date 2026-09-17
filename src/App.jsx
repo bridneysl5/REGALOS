@@ -40,6 +40,7 @@ import {
   findProductBySlug,
 } from './routes';
 import { hasPrice, formatPrice, pricedTotal, hasUnpricedItems } from './pricing';
+import { subscribeOverrides, applyOverrides } from './catalogOverrides';
 
 const App = () => {
   const [firebaseProducts, setFirebaseProducts] = useState([]);
@@ -67,9 +68,17 @@ const App = () => {
     return () => unsub();
   }, []);
 
+  // Ediciones hechas en /admin y guardadas en Firebase
+  const [catalogOverrides, setCatalogOverrides] = useState({});
+
+  useEffect(() => {
+    const unsub = subscribeOverrides(setCatalogOverrides);
+    return () => unsub();
+  }, []);
+
   const combinedProducts = useMemo(() => {
-    return [...ALL_PRODUCTS, ...firebaseProducts];
-  }, [firebaseProducts]);
+    return [...applyOverrides(ALL_PRODUCTS, catalogOverrides), ...firebaseProducts];
+  }, [firebaseProducts, catalogOverrides]);
   // --- Rutas amigables -------------------------------------------------
   const initialRoute = useMemo(
     () => parseUrl(window.location.pathname, window.location.search),

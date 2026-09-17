@@ -1,127 +1,277 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ALL_PRODUCTS } from '../data';
-import { AlertCircle, CheckCircle2, Plus, X } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Plus,
+  X,
+  Save,
+  RotateCcw,
+  LoaderCircle,
+  Lock,
+} from 'lucide-react';
+import { CATEGORIES, OCCASIONS } from '../routes';
+import {
+  subscribeOverrides,
+  applyOverrides,
+  saveOverride,
+  mensajeDeError,
+} from '../catalogOverrides';
 
-const DetailsEditor = ({ product, onChange }) => {
-  const [details, setDetails] = useState(product.details || []);
+// ---------------------------------------------------------------------------
+// Acceso al panel
+//
+// La clave se configura con la variable VITE_ADMIN_PASSWORD (en Netlify:
+// Site settings -> Environment variables). Si no está configurada se usa la
+// clave por defecto de abajo. Es una traba para curiosos, no seguridad fuerte:
+// quien sepa mirar el código de la página puede verla.
+// ---------------------------------------------------------------------------
+const CLAVE_ADMIN = import.meta.env.VITE_ADMIN_PASSWORD || 'momentos365';
+const CLAVE_ES_LA_POR_DEFECTO = !import.meta.env.VITE_ADMIN_PASSWORD;
+const SESION_KEY = 'm365_admin';
 
-  const addDetail = () => {
-    const newDetails = [...details, ''];
-    setDetails(newDetails);
-    onChange(newDetails);
-  };
+const leerSesion = () => {
+  try {
+    return sessionStorage.getItem(SESION_KEY) === 'ok';
+  } catch {
+    return false;
+  }
+};
 
-  const updateDetail = (index, value) => {
-    const newDetails = [...details];
-    newDetails[index] = value;
-    setDetails(newDetails);
-  };
+const guardarSesion = () => {
+  try {
+    sessionStorage.setItem(SESION_KEY, 'ok');
+  } catch {
+    /* modo incógnito: no pasa nada, sólo no recuerda */
+  }
+};
 
-  const removeDetail = (index) => {
-    const newDetails = details.filter((_, i) => i !== index);
-    setDetails(newDetails);
-    onChange(newDetails);
+const PantallaDeAcceso = ({ onEntrar }) => {
+  const [clave, setClave] = useState('');
+  const [error, setError] = useState(false);
+
+  const entrar = (e) => {
+    e.preventDefault();
+    if (clave === CLAVE_ADMIN) {
+      guardarSesion();
+      onEntrar();
+    } else {
+      setError(true);
+      setClave('');
+    }
   };
 
   return (
+    <div className="min-h-[60vh] flex items-center justify-center px-4">
+      <form
+        onSubmit={entrar}
+        className="bg-white border border-gray-100 shadow-sm rounded-2xl p-8 w-full max-w-sm flex flex-col gap-4"
+      >
+        <div className="flex flex-col items-center gap-2 text-center">
+          <div className="bg-rose-50 text-rose-500 p-3 rounded-full">
+            <Lock size={24} />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">Panel de administración</h2>
+          <p className="text-sm text-gray-500">Ingresa la clave para continuar.</p>
+        </div>
+
+        <input
+          type="password"
+          value={clave}
+          onChange={(e) => {
+            setClave(e.target.value);
+            setError(false);
+          }}
+          placeholder="Clave"
+          autoFocus
+          className="border border-gray-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none rounded-xl px-4 py-3 transition"
+        />
+
+        {error && (
+          <p className="text-sm text-red-600 flex items-center gap-2">
+            <AlertCircle size={16} /> Clave incorrecta.
+          </p>
+        )}
+
+        <button
+          type="submit"
+          className="bg-gray-900 hover:bg-rose-500 text-white py-3 rounded-xl font-bold transition"
+        >
+          Entrar
+        </button>
+      </form>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+
+const DetailsEditor = ({ details, onChange }) => {
+  const lista = Array.isArray(details) ? details : [];
+
+  const actualizar = (index, value) =>
+    onChange(lista.map((d, i) => (i === index ? value : d)));
+
+  return (
     <div className="flex flex-col gap-2 min-w-[300px]">
-      {details.map((detail, idx) => (
+      {lista.map((detail, idx) => (
         <div key={idx} className="flex gap-2 items-center">
-          <input 
-             value={detail} 
-             onChange={(e) => updateDetail(idx, e.target.value)}
-             onBlur={() => onChange(details)}
-             placeholder="Ej. Contiene 1 peluche..."
-             className="border border-gray-200 focus:border-rose-500 outline-none rounded-lg px-3 py-2 flex-1 text-sm bg-white"
+          <input
+            value={detail}
+            onChange={(e) => actualizar(idx, e.target.value)}
+            placeholder="Ej. Contiene 1 peluche..."
+            className="border border-gray-200 focus:border-rose-500 outline-none rounded-lg px-3 py-2 flex-1 text-sm bg-white"
           />
-          <button onClick={() => removeDetail(idx)} className="text-red-400 hover:text-red-600 transition p-1">
+          <button
+            type="button"
+            onClick={() => onChange(lista.filter((_, i) => i !== idx))}
+            className="text-red-400 hover:text-red-600 transition p-1"
+          >
             <X size={16} />
           </button>
         </div>
       ))}
-      <button onClick={addDetail} className="text-sm text-rose-500 font-bold flex items-center gap-1 hover:text-rose-600 transition w-fit mt-1">
+      <button
+        type="button"
+        onClick={() => onChange([...lista, ''])}
+        className="text-sm text-rose-500 font-bold flex items-center gap-1 hover:text-rose-600 transition w-fit mt-1"
+      >
         <Plus size={16} /> Añadir detalle
       </button>
     </div>
   );
 };
 
+// ---------------------------------------------------------------------------
+
 const Admin = () => {
-  const [products, setProducts] = useState([...ALL_PRODUCTS]);
-  const [search, setSearch] = useState('');
+  const [autorizado, setAutorizado] = useState(leerSesion);
+
+  const [overrides, setOverrides] = useState({});
+  const [products, setProducts] = useState(() => [...ALL_PRODUCTS]);
+  const [editados, setEditados] = useState({}); // { [id]: producto editado }
+  const [guardando, setGuardando] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+  const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('catalog');
 
-  const categories = ['Sets y Gift Boxes', 'Arreglos de Flores', 'Cuadros', 'Tortas y Repostería'];
-  const occasions = ['Cumpleaños', 'Graduación', 'Aniversarios y Parejas', 'Para Ella', 'Para El', 'Día del Padre', 'Nacimientos', 'Nacimientos / Baby Shower', 'Bodas y Compromisos'];
+  const statusTimer = useRef(null);
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const avisar = (type, text, ms = 4000) => {
+    setStatusMessage({ type, text });
+    clearTimeout(statusTimer.current);
+    if (ms) statusTimer.current = setTimeout(() => setStatusMessage(null), ms);
+  };
+
+  // Lo guardado en Firebase manda, salvo en los productos con cambios sin guardar.
+  useEffect(() => {
+    if (!autorizado) return undefined;
+    const unsub = subscribeOverrides(
+      (mapa) => {
+        setOverrides(mapa);
+        setProducts(applyOverrides(ALL_PRODUCTS, mapa));
+      },
+      () => avisar('error', 'No se pudieron leer los datos guardados en Firebase.', 0)
+    );
+    return () => unsub();
+  }, [autorizado]);
+
+  const pendientes = useMemo(() => Object.keys(editados), [editados]);
+  const hayPendientes = pendientes.length > 0;
+
+  // Aviso del navegador si intenta cerrar con cambios sin guardar.
+  useEffect(() => {
+    if (!hayPendientes) return undefined;
+    const handler = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hayPendientes]);
+
+  useEffect(() => () => clearTimeout(statusTimer.current), []);
+
+  /** Producto tal como debe mostrarse: la edición en curso, o lo guardado. */
+  const verProducto = (product) => editados[product.id] || product;
 
   const handleChange = (id, field, newValue) => {
-    setProducts(products.map(p => {
-      if (p.id === id) {
-        return { ...p, [field]: field === 'price' ? Number(newValue) : newValue };
-      }
-      return p;
-    }));
-
-    const p = products.find(prod => prod.id === id);
-    
-    const payload = {
-      id,
-      name: field === 'name' ? newValue : p.name,
-      price: field === 'price' ? Number(newValue) : p.price,
-      category: field === 'category' ? newValue : p.category,
-      occasion: field === 'occasion' ? newValue : p.occasion,
-      isTop: field === 'isTop' ? newValue : p.isTop,
-      isCheap: field === 'isCheap' ? newValue : p.isCheap,
-      description: field === 'description' ? newValue : p.description,
-      details: field === 'details' ? newValue : p.details,
-    };
-
-    updateProductOnServer(payload);
+    setEditados((prev) => {
+      const base = prev[id] || products.find((p) => p.id === id);
+      if (!base) return prev;
+      const actualizado = {
+        ...base,
+        [field]: field === 'price' ? (newValue === '' ? '' : Number(newValue)) : newValue,
+      };
+      return { ...prev, [id]: actualizado };
+    });
   };
 
-  const updateProductOnServer = async (payload) => {
-    try {
-      const response = await fetch('/api/update-product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      if (data.success) {
-        setStatusMessage({ type: 'success', text: 'Guardado correctamente' });
-      } else {
-        setStatusMessage({ type: 'error', text: 'Error al guardar' });
+  const descartar = () => {
+    setEditados({});
+    setProducts(applyOverrides(ALL_PRODUCTS, overrides));
+    avisar('success', 'Cambios descartados.');
+  };
+
+  const guardar = async () => {
+    if (!hayPendientes || guardando) return;
+    setGuardando(true);
+    setStatusMessage(null);
+
+    const aGuardar = pendientes.map((id) => editados[id]);
+    const fallidos = [];
+    let primerError = null;
+
+    for (const producto of aGuardar) {
+      try {
+        await saveOverride(producto);
+      } catch (err) {
+        console.error('[admin] error al guardar', producto.id, err);
+        fallidos.push(producto);
+        if (!primerError) primerError = err;
       }
-    } catch (err) {
-      console.error(err);
-      setStatusMessage({ type: 'error', text: 'Error de conexión' });
     }
-    
-    setTimeout(() => setStatusMessage(null), 2000);
+
+    setGuardando(false);
+
+    if (fallidos.length === 0) {
+      setEditados({});
+      avisar('success', `Guardado (${aGuardar.length} ${aGuardar.length === 1 ? 'producto' : 'productos'}).`);
+    } else {
+      const quedan = {};
+      fallidos.forEach((p) => {
+        quedan[p.id] = p;
+      });
+      setEditados(quedan);
+      avisar('error', mensajeDeError(primerError), 0);
+    }
   };
+
+  const filteredProducts = useMemo(
+    () => products.filter((p) => verProducto(p).name.toLowerCase().includes(search.toLowerCase())),
+    [products, editados, search]
+  );
+
+  if (!autorizado) return <PantallaDeAcceso onEntrar={() => setAutorizado(true)} />;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Administrador de Catálogo</h2>
-          <p className="text-gray-500">Modifica categorías, descripciones y detalles.</p>
+          <p className="text-gray-500">
+            Edita lo que necesites y presiona <strong>Guardar cambios</strong>.
+          </p>
+          {CLAVE_ES_LA_POR_DEFECTO && (
+            <p className="text-xs text-amber-600 mt-1">
+              Estás usando la clave por defecto. Configúrala en Netlify como VITE_ADMIN_PASSWORD.
+            </p>
+          )}
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-          {statusMessage && (
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold animate-in zoom-in shrink-0 ${statusMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-              {statusMessage.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-              {statusMessage.text}
-            </div>
-          )}
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre..." 
+          <input
+            type="text"
+            placeholder="Buscar por nombre..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 w-full md:w-64"
@@ -130,14 +280,14 @@ const Admin = () => {
       </div>
 
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        <button 
-          onClick={() => setActiveTab('catalog')} 
+        <button
+          onClick={() => setActiveTab('catalog')}
           className={`px-6 py-2.5 font-bold rounded-xl transition whitespace-nowrap ${activeTab === 'catalog' ? 'bg-rose-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
         >
           Catálogo General
         </button>
-        <button 
-          onClick={() => setActiveTab('descriptions')} 
+        <button
+          onClick={() => setActiveTab('descriptions')}
           className={`px-6 py-2.5 font-bold rounded-xl transition whitespace-nowrap ${activeTab === 'descriptions' ? 'bg-rose-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
         >
           Descripciones y Detalles
@@ -166,126 +316,155 @@ const Admin = () => {
               )}
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredProducts.map(product => (
-                <tr key={product.id} className="hover:bg-gray-50/50 transition">
-                  <td className="px-6 py-4 align-top">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
-                        <img src={product.img} alt={product.name} className="w-full h-full object-cover" />
-                      </div>
-                      {activeTab === 'catalog' ? (
-                        <input 
-                          type="text"
-                          value={product.name}
-                          onChange={(e) => handleChange(product.id, 'name', e.target.value)}
-                          className="font-bold text-gray-800 text-sm bg-transparent border-b border-transparent hover:border-gray-300 focus:border-rose-500 outline-none w-full max-w-[200px] px-1 py-0.5 transition"
-                        />
-                      ) : (
-                        <span className="font-bold text-gray-800 text-sm">{product.name}</span>
-                      )}
-                    </div>
-                  </td>
-
-                  {activeTab === 'catalog' ? (
-                    <>
-                      <td className="px-6 py-4 font-bold text-gray-700 align-top pt-8">
-                        <div className="flex items-center gap-1">
-                          <span>S/</span>
-                          <input 
-                            type="number"
-                            value={product.price}
-                            onChange={(e) => handleChange(product.id, 'price', e.target.value)}
-                            className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-rose-500 outline-none w-20 px-1 py-0.5 transition"
-                          />
+              {filteredProducts.map((base) => {
+                const product = verProducto(base);
+                const pendiente = !!editados[base.id];
+                return (
+                  <tr
+                    key={base.id}
+                    className={`transition ${pendiente ? 'bg-amber-50/60' : 'hover:bg-gray-50/50'}`}
+                  >
+                    <td className="px-6 py-4 align-top">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
+                          <img src={product.img} alt={product.name} className="w-full h-full object-cover" />
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-center align-top pt-8">
-                        <input 
-                          type="checkbox" 
-                          className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer w-5 h-5"
-                          checked={!!product.isTop}
-                          onChange={(e) => handleChange(product.id, 'isTop', e.target.checked)}
-                        />
-                      </td>
-                      <td className="px-6 py-4 text-center align-top pt-8">
-                        <input 
-                          type="checkbox" 
-                          className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer w-5 h-5"
-                          checked={!!product.isCheap}
-                          onChange={(e) => handleChange(product.id, 'isCheap', e.target.checked)}
-                        />
-                      </td>
-                      <td className="px-6 py-4 relative align-top pt-8">
-                        <details className="group">
-                          <summary className="bg-white border border-gray-200 hover:border-rose-300 text-gray-800 text-sm rounded-lg p-2 cursor-pointer list-none min-h-[38px] flex items-center justify-between shadow-sm">
-                            <span className="truncate pr-2">{Array.isArray(product.category) && product.category.length > 0 ? product.category.join(', ') : 'Seleccionar'}</span>
-                            <span className="text-gray-400 text-xs">▼</span>
-                          </summary>
-                          <div className="absolute z-20 w-56 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 max-h-60 overflow-y-auto">
-                            {categories.map(c => (
-                              <label key={c} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-rose-50 p-1.5 rounded transition">
-                                <input 
-                                  type="checkbox" 
-                                  className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer"
-                                  checked={Array.isArray(product.category) && product.category.includes(c)}
-                                  onChange={(e) => {
-                                    const current = Array.isArray(product.category) ? product.category : [];
-                                    const newValue = e.target.checked ? [...current, c] : current.filter(item => item !== c);
-                                    handleChange(product.id, 'category', newValue);
-                                  }}
-                                />
-                                {c}
-                              </label>
-                            ))}
+                        {activeTab === 'catalog' ? (
+                          <input
+                            type="text"
+                            value={product.name}
+                            onChange={(e) => handleChange(base.id, 'name', e.target.value)}
+                            className="font-bold text-gray-800 text-sm bg-transparent border-b border-transparent hover:border-gray-300 focus:border-rose-500 outline-none w-full max-w-[200px] px-1 py-0.5 transition"
+                          />
+                        ) : (
+                          <span className="font-bold text-gray-800 text-sm">{product.name}</span>
+                        )}
+                      </div>
+                    </td>
+
+                    {activeTab === 'catalog' ? (
+                      <>
+                        <td className="px-6 py-4 font-bold text-gray-700 align-top pt-8">
+                          <div className="flex items-center gap-1">
+                            <span>S/</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={product.price}
+                              onChange={(e) => handleChange(base.id, 'price', e.target.value)}
+                              className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-rose-500 outline-none w-20 px-1 py-0.5 transition"
+                            />
                           </div>
-                        </details>
-                      </td>
-                      <td className="px-6 py-4 relative align-top pt-8">
-                        <details className="group">
-                          <summary className="bg-white border border-gray-200 hover:border-rose-300 text-gray-800 text-sm rounded-lg p-2 cursor-pointer list-none min-h-[38px] flex items-center justify-between shadow-sm">
-                            <span className="truncate pr-2">{Array.isArray(product.occasion) && product.occasion.length > 0 ? product.occasion.join(', ') : 'Seleccionar'}</span>
-                            <span className="text-gray-400 text-xs">▼</span>
-                          </summary>
-                          <div className="absolute z-20 w-56 right-6 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 max-h-60 overflow-y-auto">
-                            {occasions.map(o => (
-                              <label key={o} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-rose-50 p-1.5 rounded transition">
-                                <input 
-                                  type="checkbox" 
-                                  className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer"
-                                  checked={Array.isArray(product.occasion) && product.occasion.includes(o)}
-                                  onChange={(e) => {
-                                    const current = Array.isArray(product.occasion) ? product.occasion : [];
-                                    const newValue = e.target.checked ? [...current, o] : current.filter(item => item !== o);
-                                    handleChange(product.id, 'occasion', newValue);
-                                  }}
-                                />
-                                {o}
-                              </label>
-                            ))}
-                          </div>
-                        </details>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-6 py-4 align-top">
-                        <textarea 
-                          defaultValue={product.description || ''}
-                          onBlur={(e) => handleChange(product.id, 'description', e.target.value)}
-                          placeholder="Un detalle especial y único..."
-                          className="w-full min-h-[120px] bg-white border border-gray-200 rounded-xl p-3 text-sm text-gray-700 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition resize-y"
-                        />
-                      </td>
-                      <td className="px-6 py-4 align-top">
-                        <DetailsEditor 
-                          product={product} 
-                          onChange={(newDetails) => handleChange(product.id, 'details', newDetails)} 
-                        />
-                      </td>
-                    </>
-                  )}
-                </tr>
-              ))}
+                        </td>
+                        <td className="px-6 py-4 text-center align-top pt-8">
+                          <input
+                            type="checkbox"
+                            className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer w-5 h-5"
+                            checked={!!product.isTop}
+                            onChange={(e) => handleChange(base.id, 'isTop', e.target.checked)}
+                          />
+                        </td>
+                        <td className="px-6 py-4 text-center align-top pt-8">
+                          <input
+                            type="checkbox"
+                            className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer w-5 h-5"
+                            checked={!!product.isCheap}
+                            onChange={(e) => handleChange(base.id, 'isCheap', e.target.checked)}
+                          />
+                        </td>
+                        <td className="px-6 py-4 relative align-top pt-8">
+                          <details className="group">
+                            <summary className="bg-white border border-gray-200 hover:border-rose-300 text-gray-800 text-sm rounded-lg p-2 cursor-pointer list-none min-h-[38px] flex items-center justify-between shadow-sm">
+                              <span className="truncate pr-2">
+                                {Array.isArray(product.category) && product.category.length > 0
+                                  ? product.category.join(', ')
+                                  : 'Seleccionar'}
+                              </span>
+                              <span className="text-gray-400 text-xs">▼</span>
+                            </summary>
+                            <div className="absolute z-20 w-56 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 max-h-60 overflow-y-auto">
+                              {CATEGORIES.map((c) => (
+                                <label
+                                  key={c}
+                                  className="flex items-center gap-2 text-sm cursor-pointer hover:bg-rose-50 p-1.5 rounded transition"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer"
+                                    checked={Array.isArray(product.category) && product.category.includes(c)}
+                                    onChange={(e) => {
+                                      const actual = Array.isArray(product.category) ? product.category : [];
+                                      handleChange(
+                                        base.id,
+                                        'category',
+                                        e.target.checked ? [...actual, c] : actual.filter((i) => i !== c)
+                                      );
+                                    }}
+                                  />
+                                  {c}
+                                </label>
+                              ))}
+                            </div>
+                          </details>
+                        </td>
+                        <td className="px-6 py-4 relative align-top pt-8">
+                          <details className="group">
+                            <summary className="bg-white border border-gray-200 hover:border-rose-300 text-gray-800 text-sm rounded-lg p-2 cursor-pointer list-none min-h-[38px] flex items-center justify-between shadow-sm">
+                              <span className="truncate pr-2">
+                                {Array.isArray(product.occasion) && product.occasion.length > 0
+                                  ? product.occasion.join(', ')
+                                  : 'Seleccionar'}
+                              </span>
+                              <span className="text-gray-400 text-xs">▼</span>
+                            </summary>
+                            <div className="absolute z-20 w-56 right-6 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 max-h-60 overflow-y-auto">
+                              {OCCASIONS.map((o) => (
+                                <label
+                                  key={o}
+                                  className="flex items-center gap-2 text-sm cursor-pointer hover:bg-rose-50 p-1.5 rounded transition"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer"
+                                    checked={Array.isArray(product.occasion) && product.occasion.includes(o)}
+                                    onChange={(e) => {
+                                      const actual = Array.isArray(product.occasion) ? product.occasion : [];
+                                      handleChange(
+                                        base.id,
+                                        'occasion',
+                                        e.target.checked ? [...actual, o] : actual.filter((i) => i !== o)
+                                      );
+                                    }}
+                                  />
+                                  {o}
+                                </label>
+                              ))}
+                            </div>
+                          </details>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-6 py-4 align-top">
+                          <textarea
+                            value={product.description || ''}
+                            onChange={(e) => handleChange(base.id, 'description', e.target.value)}
+                            placeholder="Un detalle especial y único..."
+                            className="w-full min-h-[120px] bg-white border border-gray-200 rounded-xl p-3 text-sm text-gray-700 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition resize-y"
+                          />
+                        </td>
+                        <td className="px-6 py-4 align-top">
+                          <DetailsEditor
+                            details={product.details}
+                            onChange={(nuevos) => handleChange(base.id, 'details', nuevos)}
+                          />
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                );
+              })}
               {filteredProducts.length === 0 && (
                 <tr>
                   <td colSpan={activeTab === 'catalog' ? 6 : 3} className="px-6 py-12 text-center text-gray-500">
@@ -298,6 +477,46 @@ const Admin = () => {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Barra fija de guardado */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.06)]">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center gap-3 sm:justify-between">
+          <div className="flex items-center gap-3 text-sm">
+            {statusMessage ? (
+              <span
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold ${statusMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+              >
+                {statusMessage.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                {statusMessage.text}
+              </span>
+            ) : hayPendientes ? (
+              <span className="text-amber-600 font-bold">
+                {pendientes.length} {pendientes.length === 1 ? 'producto sin guardar' : 'productos sin guardar'}
+              </span>
+            ) : (
+              <span className="text-gray-400">Todo guardado.</span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={descartar}
+              disabled={!hayPendientes || guardando}
+              className="px-5 py-3 rounded-xl font-bold text-gray-600 border border-gray-200 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <RotateCcw size={18} /> Descartar
+            </button>
+            <button
+              onClick={guardar}
+              disabled={!hayPendientes || guardando}
+              className="px-8 py-3 rounded-xl font-bold text-white bg-gray-900 hover:bg-rose-500 transition shadow-lg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900 flex items-center gap-2"
+            >
+              {guardando ? <LoaderCircle size={18} className="animate-spin" /> : <Save size={18} />}
+              {guardando ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
