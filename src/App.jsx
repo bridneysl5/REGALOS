@@ -76,8 +76,22 @@ const App = () => {
     return () => unsub();
   }, []);
 
+  // El catálogo de Firebase (lo que administras en admin-ventas) manda.
+  // De src/data.js solo se agregan los productos que NO existen en Firebase,
+  // comparando por nombre, para que nada salga duplicado.
   const combinedProducts = useMemo(() => {
-    return [...applyOverrides(ALL_PRODUCTS, catalogOverrides), ...firebaseProducts];
+    const normalizar = (texto) =>
+      String(texto || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const enFirebase = new Set(firebaseProducts.map((p) => normalizar(p.name)));
+    const soloEnCodigo = ALL_PRODUCTS.filter((p) => !enFirebase.has(normalizar(p.name)));
+
+    return applyOverrides([...soloEnCodigo, ...firebaseProducts], catalogOverrides);
   }, [firebaseProducts, catalogOverrides]);
   // --- Rutas amigables -------------------------------------------------
   const initialRoute = useMemo(
