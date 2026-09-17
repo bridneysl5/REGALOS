@@ -21,13 +21,18 @@ import {
 // ---------------------------------------------------------------------------
 // Acceso al panel
 //
-// La clave se configura con la variable VITE_ADMIN_PASSWORD (en Netlify:
-// Site settings -> Environment variables). Si no está configurada se usa la
-// clave por defecto de abajo. Es una traba para curiosos, no seguridad fuerte:
-// quien sepa mirar el código de la página puede verla.
+// >>> LA CLAVE DEL ADMIN ES ESTA LINEA <<<
+// Para cambiarla: edita el texto de abajo, guarda el archivo, y sube el cambio
+// (git commit + git push). Netlify publica solo en 1-2 minutos.
+//
+// Es una traba para curiosos, no seguridad fuerte: la clave viaja dentro del
+// codigo de la pagina, asi que quien sepa buscar puede verla. La proteccion
+// de verdad seria un login con Firebase Authentication.
+//
+// (Tambien se puede definir la variable VITE_ADMIN_PASSWORD en Netlify; si
+// existe, esa manda sobre la clave de abajo.)
 // ---------------------------------------------------------------------------
-const CLAVE_ADMIN = import.meta.env.VITE_ADMIN_PASSWORD || 'momentos365';
-const CLAVE_ES_LA_POR_DEFECTO = !import.meta.env.VITE_ADMIN_PASSWORD;
+const CLAVE_ADMIN = import.meta.env.VITE_ADMIN_PASSWORD || '1502';
 const SESION_KEY = 'm365_admin';
 
 const leerSesion = () => {
@@ -262,11 +267,6 @@ const Admin = () => {
           <p className="text-gray-500">
             Edita lo que necesites y presiona <strong>Guardar cambios</strong>.
           </p>
-          {CLAVE_ES_LA_POR_DEFECTO && (
-            <p className="text-xs text-amber-600 mt-1">
-              Estás usando la clave por defecto. Configúrala en Netlify como VITE_ADMIN_PASSWORD.
-            </p>
-          )}
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
           <input
