@@ -9,6 +9,7 @@ import {
   RotateCcw,
   LoaderCircle,
   Lock,
+  UploadCloud,
 } from 'lucide-react';
 import { CATEGORIES, OCCASIONS } from '../routes';
 import {
@@ -17,6 +18,12 @@ import {
   saveOverride,
   mensajeDeError,
 } from '../catalogOverrides';
+import {
+  subscribeProductosRegalos,
+  mergeCatalogo,
+  productosFaltantes,
+  importarProducto,
+} from '../productosFirebase';
 
 // ---------------------------------------------------------------------------
 // Acceso al panel
@@ -153,7 +160,8 @@ const Admin = () => {
   const [autorizado, setAutorizado] = useState(leerSesion);
 
   const [overrides, setOverrides] = useState({});
-  const [products, setProducts] = useState(() => [...ALL_PRODUCTS]);
+  const [firebaseProducts, setFirebaseProducts] = useState([]);
+  const [importando, setImportando] = useState(false);
   const [editados, setEditados] = useState({}); // { [id]: producto editado }
   const [guardando, setGuardando] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
@@ -168,18 +176,31 @@ const Admin = () => {
     if (ms) statusTimer.current = setTimeout(() => setStatusMessage(null), ms);
   };
 
-  // Lo guardado en Firebase manda, salvo en los productos con cambios sin guardar.
   useEffect(() => {
     if (!autorizado) return undefined;
-    const unsub = subscribeOverrides(
-      (mapa) => {
-        setOverrides(mapa);
-        setProducts(applyOverrides(ALL_PRODUCTS, mapa));
-      },
-      () => avisar('error', 'No se pudieron leer los datos guardados en Firebase.', 0)
+    const unsubOverrides = subscribeOverrides(setOverrides, () =>
+      avisar('error', 'No se pudieron leer los datos guardados en Firebase.', 0)
     );
-    return () => unsub();
+    const unsubProductos = subscribeProductosRegalos(setFirebaseProducts, () =>
+      avisar('error', 'No se pudo leer el catálogo de Firebase.', 0)
+    );
+    return () => {
+      unsubOverrides();
+      unsubProductos();
+    };
   }, [autorizado]);
+
+  // El mismo catálogo que ve la tienda: Firebase manda, y de src/data.js solo
+  // se suman los productos que aún no existen allí.
+  const products = useMemo(
+    () => applyOverrides(mergeCatalogo(ALL_PRODUCTS, firebaseProducts), overrides),
+    [firebaseProducts, overrides]
+  );
+
+  const faltantes = useMemo(
+    () => productosFaltantes(ALL_PRODUCTS, firebaseProducts),
+    [firebaseProducts]
+  );
 
   const pendientes = useMemo(() => Object.keys(editados), [editados]);
   const hayPendientes = pendientes.length > 0;
@@ -214,8 +235,32 @@ const Admin = () => {
 
   const descartar = () => {
     setEditados({});
-    setProducts(applyOverrides(ALL_PRODUCTS, overrides));
     avisar('success', 'Cambios descartados.');
+  };
+
+  const importarFaltantes = async () => {
+    if (importando || faltantes.length === 0) return;
+    setImportando(true);
+    setStatusMessage(null);
+
+    let creados = 0;
+    let primerError = null;
+    for (const producto of faltantes) {
+      try {
+        await importarProducto(producto);
+        creados++;
+      } catch (err) {
+        console.error('[admin] error al importar', producto.name, err);
+        if (!primerError) primerError = err;
+      }
+    }
+
+    setImportando(false);
+    if (primerError) {
+      avisar('error', `${mensajeDeError(primerError)} (se importaron ${creados}).`, 0);
+    } else {
+      avisar('success', `${creados} ${creados === 1 ? 'producto importado' : 'productos importados'} a Firebase.`);
+    }
   };
 
   const guardar = async () => {
@@ -293,6 +338,30 @@ const Admin = () => {
           Descripciones y Detalles
         </button>
       </div>
+
+      {faltantes.length > 0 && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+          <div>
+            <p className="font-bold text-amber-900">
+              {faltantes.length} {faltantes.length === 1 ? 'producto vive solo en el código' : 'productos viven solo en el código'}
+            </p>
+            <p className="text-sm text-amber-800 mt-1">
+              {faltantes.map((p) => p.name).join(', ')}
+            </p>
+            <p className="text-xs text-amber-700 mt-2">
+              Impórtalos y quedarán en Firebase junto al resto, para administrarlos desde un solo lugar.
+            </p>
+          </div>
+          <button
+            onClick={importarFaltantes}
+            disabled={importando}
+            className="shrink-0 px-6 py-3 rounded-xl font-bold text-white bg-amber-600 hover:bg-amber-700 transition shadow disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {importando ? <LoaderCircle size={18} className="animate-spin" /> : <UploadCloud size={18} />}
+            {importando ? 'Importando...' : 'Importar a Firebase'}
+          </button>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden pb-32">
         <div className="overflow-x-visible">

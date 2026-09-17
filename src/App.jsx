@@ -25,8 +25,6 @@ import {
 } from 'lucide-react';
 
 import { ALL_PRODUCTS } from './data';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from './firebase';
 import ProductCard from './components/ProductCard';
 import Filters from './components/Filters';
 import ProductGrid from './components/ProductGrid';
@@ -41,27 +39,14 @@ import {
 } from './routes';
 import { hasPrice, formatPrice, pricedTotal, hasUnpricedItems } from './pricing';
 import { subscribeOverrides, applyOverrides } from './catalogOverrides';
+import { subscribeProductosRegalos, mergeCatalogo } from './productosFirebase';
 
 const App = () => {
   const [firebaseProducts, setFirebaseProducts] = useState([]);
   const [firebaseLoaded, setFirebaseLoaded] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, 'productos'), where('emprendimiento', '==', 'Regalos'));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const docs = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        docs.push({
-          id: doc.id,
-          name: data.nombre || 'Producto sin nombre',
-          price: data.precioVenta || 0,
-          category: data.categoria?.length ? data.categoria : ["Todos"],
-          occasion: data.ocasion?.length ? data.ocasion : ["Todos"],
-          img: data.imageUrl || '',
-          details: data.detalles || []
-        });
-      });
+    const unsub = subscribeProductosRegalos((docs) => {
       setFirebaseProducts(docs);
       setFirebaseLoaded(true);
     });
@@ -76,23 +61,12 @@ const App = () => {
     return () => unsub();
   }, []);
 
-  // El catálogo de Firebase (lo que administras en admin-ventas) manda.
-  // De src/data.js solo se agregan los productos que NO existen en Firebase,
-  // comparando por nombre, para que nada salga duplicado.
-  const combinedProducts = useMemo(() => {
-    const normalizar = (texto) =>
-      String(texto || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .replace(/\s+/g, ' ')
-        .trim();
-
-    const enFirebase = new Set(firebaseProducts.map((p) => normalizar(p.name)));
-    const soloEnCodigo = ALL_PRODUCTS.filter((p) => !enFirebase.has(normalizar(p.name)));
-
-    return applyOverrides([...soloEnCodigo, ...firebaseProducts], catalogOverrides);
-  }, [firebaseProducts, catalogOverrides]);
+  // El catálogo de Firebase (lo que administras en admin-ventas) manda; de
+  // src/data.js solo se suman los productos que no existen en Firebase.
+  const combinedProducts = useMemo(
+    () => applyOverrides(mergeCatalogo(ALL_PRODUCTS, firebaseProducts), catalogOverrides),
+    [firebaseProducts, catalogOverrides]
+  );
   // --- Rutas amigables -------------------------------------------------
   const initialRoute = useMemo(
     () => parseUrl(window.location.pathname, window.location.search),
