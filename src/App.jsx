@@ -39,6 +39,7 @@ import {
   parseUrl,
   findProductBySlug,
 } from './routes';
+import { hasPrice, formatPrice, pricedTotal, hasUnpricedItems } from './pricing';
 
 const App = () => {
   const [firebaseProducts, setFirebaseProducts] = useState([]);
@@ -246,6 +247,8 @@ const App = () => {
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
   const cartCount = cart.reduce((count, item) => count + item.qty, 0);
+  const cartPricedTotal = pricedTotal(cart);
+  const cartHasUnpriced = hasUnpricedItems(cart);
 
   // WhatsApp Format & Send
   const sendWhatsAppOrder = () => {
@@ -253,13 +256,21 @@ const App = () => {
     let message = 'Hola MOMENTOS me gustaría solicitar el siguiente pedido: \n';
 
     cart.forEach(item => {
-      // const subtotal = item.price * item.qty;
-      // message += `*${item.qty}x ${item.name}* \nPrecio unitario: S/${item.price.toFixed(2)} \n*Subtotal:* S/ ${subtotal.toFixed(2)} \n\n`;
-      message += `*${item.qty}x ${item.name}* \n\n`;
+      if (hasPrice(item)) {
+        const subtotal = item.price * item.qty;
+        message += `*${item.qty}x ${item.name}* \nPrecio unitario: ${formatPrice(item.price)} \n*Subtotal:* ${formatPrice(subtotal)} \n\n`;
+      } else {
+        message += `*${item.qty}x ${item.name}* \n\n`;
+      }
     });
 
-    // message += `*TOTAL ESTIMADO:* S/ ${cartTotal.toFixed(2)} \n\nPor favor envíenme los detalles para realizar el pago.`;
-    message += `Por favor envíenme los detalles para consultar el precio y realizar el pago.`;
+    if (cartPricedTotal > 0) {
+      message += `*TOTAL ESTIMADO:* ${formatPrice(cartPricedTotal)} \n\n`;
+    }
+
+    message += cartHasUnpriced
+      ? `Por favor envíenme los detalles para consultar el precio y realizar el pago.`
+      : `Por favor envíenme los detalles para realizar el pago.`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/51916098803?text=${encodedMessage}`, '_blank');
@@ -671,7 +682,9 @@ const App = () => {
                       <span className="font-medium text-sm w-4 text-center">{item.qty}</span>
                       <button onClick={() => updateQuantity(item.id, 1)} className="text-gray-500 hover:text-rose-500"><Plus size={14} /></button>
                     </div>
-                    {/* <span className="font-bold text-rose-500">S/ {(item.price * item.qty).toFixed(2)}</span> */}
+                    {hasPrice(item) && (
+                      <span className="font-bold text-rose-500">{formatPrice(item.price * item.qty)}</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -681,9 +694,20 @@ const App = () => {
 
         {cart.length > 0 && (
           <div className="p-6 border-t border-gray-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-            <div className="flex justify-between items-center mb-6">
-              <span className="font-bold text-gray-600">Total Estimado</span>
-              {/* <span className="text-2xl font-black text-rose-500">S/ {cartTotal.toFixed(2)}</span> */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-gray-600">Total Estimado</span>
+                {cartPricedTotal > 0 && (
+                  <span className="text-2xl font-black text-rose-500">{formatPrice(cartPricedTotal)}</span>
+                )}
+              </div>
+              {cartHasUnpriced && (
+                <p className="text-xs text-gray-400 mt-1">
+                  {cartPricedTotal > 0
+                    ? 'No incluye los productos que se cotizan por WhatsApp.'
+                    : 'Te cotizamos el pedido por WhatsApp.'}
+                </p>
+              )}
             </div>
             <button
               onClick={sendWhatsAppOrder}
@@ -739,9 +763,11 @@ const App = () => {
                 {selectedProduct.name}
               </h2>
 
-              {/* <p className="text-4xl font-black text-rose-500 mb-6">
-                S/ {selectedProduct.price.toFixed(2)}
-              </p> */}
+              {hasPrice(selectedProduct) && (
+                <p className="text-4xl font-black text-rose-500 mb-6">
+                  {formatPrice(selectedProduct.price)}
+                </p>
+              )}
 
               <div className="prose prose-sm text-gray-600 mb-8">
                 <p className="leading-relaxed">
