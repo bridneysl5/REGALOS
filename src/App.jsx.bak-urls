@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ShoppingBag,
   Heart,
@@ -32,17 +32,9 @@ import Filters from './components/Filters';
 import ProductGrid from './components/ProductGrid';
 import MouseHearts from './components/MouseHearts';
 import Admin from './components/Admin';
-import {
-  CATEGORIES,
-  OCCASIONS,
-  buildUrl,
-  parseUrl,
-  findProductBySlug,
-} from './routes';
 
 const App = () => {
   const [firebaseProducts, setFirebaseProducts] = useState([]);
-  const [firebaseLoaded, setFirebaseLoaded] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, 'productos'), where('emprendimiento', '==', 'Regalos'));
@@ -61,7 +53,6 @@ const App = () => {
         });
       });
       setFirebaseProducts(docs);
-      setFirebaseLoaded(true);
     });
     return () => unsub();
   }, []);
@@ -69,121 +60,79 @@ const App = () => {
   const combinedProducts = useMemo(() => {
     return [...ALL_PRODUCTS, ...firebaseProducts];
   }, [firebaseProducts]);
-  // --- Rutas amigables -------------------------------------------------
-  const initialRoute = useMemo(
-    () => parseUrl(window.location.pathname, window.location.search),
-    []
-  );
-
-  const [view, setView] = useState(initialRoute.view);
-  const [activeFilter, setActiveFilter] = useState({
-    category: initialRoute.category,
-    occasion: initialRoute.occasion,
-    search: initialRoute.search,
+  const [view, setView] = useState(() => {
+    if (window.location.pathname === '/admin') return 'admin';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('view') || 'home';
+  });
+  const [activeFilter, setActiveFilter] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      category: params.get('category') || 'Todos',
+      occasion: params.get('occasion') || 'Todos',
+      search: params.get('search') || ''
+    };
   });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Cart State
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(() =>
-    findProductBySlug(ALL_PRODUCTS, initialRoute.productSlug)
-  );
-  const [pendingProductSlug, setPendingProductSlug] = useState(() =>
-    initialRoute.productSlug && !findProductBySlug(ALL_PRODUCTS, initialRoute.productSlug)
-      ? initialRoute.productSlug
-      : null
-  );
+  const [selectedProduct, setSelectedProduct] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const productParam = params.get('product');
+    if (productParam) {
+      // It will not find firebase products on initial load, but that's a minor bug we can accept for now
+      return ALL_PRODUCTS.find(
+        p => p.id.toString() === productParam || p.name.toLowerCase().replace(/\s+/g, '-') === productParam.toLowerCase()
+      ) || null;
+    }
+    return null;
+  });
   const [copied, setCopied] = useState(false);
 
-  const isPopping = useRef(false);
-  const lastUrl = useRef(null);
-
-  // El producto puede vivir en Firebase: lo resolvemos cuando llega el catálogo.
   useEffect(() => {
-    if (!pendingProductSlug) return;
-    const found = findProductBySlug(combinedProducts, pendingProductSlug);
-    if (found) {
-      setSelectedProduct(found);
-      setPendingProductSlug(null);
-    } else if (firebaseLoaded) {
-      setPendingProductSlug(null); // ya no existe: mostramos el catálogo
-    }
-  }, [combinedProducts, pendingProductSlug, firebaseLoaded]);
+    const url = new URL(window.location);
+    let changed = false;
 
-  // Estado -> URL
-  useEffect(() => {
-    if (view === 'admin') return;
-    if (isPopping.current) {
-      isPopping.current = false;
-      return;
-    }
-    if (pendingProductSlug && !selectedProduct) return; // esperamos al producto
+    const setParam = (key, value) => {
+      if (url.searchParams.get(key) !== value) {
+        url.searchParams.set(key, value);
+        changed = true;
+      }
+    };
+    const delParam = (key) => {
+      if (url.searchParams.has(key)) {
+        url.searchParams.delete(key);
+        changed = true;
+      }
+    };
 
-    const target = buildUrl({
-      view,
-      category: activeFilter.category,
-      occasion: activeFilter.occasion,
-      search: activeFilter.search,
-      product: selectedProduct,
-    });
-    const current = `${window.location.pathname}${window.location.search}`;
+    if (view === 'shop') setParam('view', 'shop');
+    else delParam('view');
 
-    if (target === current) {
-      lastUrl.current = target;
-      return;
-    }
+    if (activeFilter.category !== 'Todos') setParam('category', activeFilter.category);
+    else delParam('category');
 
-    const previous = lastUrl.current;
-    const onlyQueryChanged =
-      previous && previous.split('?')[0] === target.split('?')[0];
+    if (activeFilter.occasion !== 'Todos') setParam('occasion', activeFilter.occasion);
+    else delParam('occasion');
 
-    if (previous === null || onlyQueryChanged) {
-      // Primera carga (incluye enlaces antiguos) o sólo cambió la búsqueda.
-      window.history.replaceState({}, '', target);
+    if (activeFilter.search) setParam('search', activeFilter.search);
+    else delParam('search');
+
+    if (selectedProduct) {
+      setParam('product', selectedProduct.name.toLowerCase().replace(/\s+/g, '-'));
     } else {
-      window.history.pushState({}, '', target);
+      delParam('product');
     }
-    lastUrl.current = target;
-  }, [view, activeFilter, selectedProduct, pendingProductSlug]);
 
-  // Título de la pestaña acorde a la ruta
-  useEffect(() => {
-    const brand = 'Momentos365';
-    let title = `${brand} | Regalos y detalles personalizados`;
-    if (selectedProduct) title = `${selectedProduct.name} | ${brand}`;
-    else if (view === 'shop') {
-      const filtro =
-        (activeFilter.category !== 'Todos' && activeFilter.category) ||
-        (activeFilter.occasion !== 'Todos' && activeFilter.occasion) ||
-        'Catálogo';
-      title = `${filtro} | ${brand}`;
+    if (changed) {
+      window.history.replaceState({}, '', url);
     }
-    document.title = title;
   }, [view, activeFilter, selectedProduct]);
 
-  // URL -> estado (botón atrás / adelante del navegador)
-  useEffect(() => {
-    const onPop = () => {
-      const route = parseUrl(window.location.pathname, window.location.search);
-      const product = findProductBySlug(combinedProducts, route.productSlug);
-      isPopping.current = true;
-      lastUrl.current = `${window.location.pathname}${window.location.search}`;
-      setView(route.view);
-      setActiveFilter({
-        category: route.category,
-        occasion: route.occasion,
-        search: route.search,
-      });
-      setSelectedProduct(product);
-      setPendingProductSlug(route.productSlug && !product ? route.productSlug : null);
-    };
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, [combinedProducts]);
-
-  const categories = ['Todos', ...CATEGORIES];
-  const occasions = ['Todos', ...OCCASIONS];
+  const categories = ['Todos', 'Sets y Gift Boxes', 'Arreglos de Flores', 'Cuadros', 'Tortas y Repostería'];
+  const occasions = ['Todos', 'Cumpleaños', 'Graduación', 'Aniversarios y Parejas', 'Para Ella', 'Para Él', 'Nacimientos', 'Flores Amarillas', 'Hotwheels'];
 
   const filteredProducts = useMemo(() => {
     let result = combinedProducts.filter(p => {
@@ -208,7 +157,7 @@ const App = () => {
     }
 
     return result;
-  }, [activeFilter, combinedProducts]);
+  }, [activeFilter]);
 
   const navigateToShop = (type, value) => {
     if (view === 'home') {
