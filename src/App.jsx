@@ -20,8 +20,8 @@ import {
   User,
   Settings,
   Share2,
-import {
-  Check
+  Check,
+  Car
 } from 'lucide-react';
 
 import { ALL_PRODUCTS } from './data';
@@ -132,7 +132,7 @@ const App = () => {
   }, [view, activeFilter, selectedProduct]);
 
   const categories = ['Todos', 'Sets y Gift Boxes', 'Arreglos de Flores', 'Cuadros', 'Tortas y Repostería'];
-  const occasions = ['Todos', 'Cumpleaños', 'Graduación', 'Aniversarios y Parejas', 'Para Ella', 'Día del Padre', 'Nacimientos'];
+  const occasions = ['Todos', 'Cumpleaños', 'Graduación', 'Aniversarios y Parejas', 'Para Ella', 'Para Él', 'Nacimientos', 'Flores Amarillas', 'Hotwheels'];
 
   const filteredProducts = useMemo(() => {
     let result = combinedProducts.filter(p => {
@@ -224,10 +224,8 @@ const App = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
-            <div className="bg-rose-500 p-2 rounded-lg text-white">
-              <Gift size={24} />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-gray-800">GIFTIFY</span>
+            <img src="/images/logo.png" alt="Momentos 365 Logo" className="w-20 h-20 object-contain" />
+            <span className="text-xl font-bold font-serif text-[#ce293b] italic">Momentos365</span>
           </div>
 
           <div className="hidden md:flex space-x-8">
@@ -273,20 +271,34 @@ const App = () => {
   const HomeView = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const sliderImages = useMemo(() => {
-      return [...combinedProducts].sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0)).slice(0, 5).map(p => p.img).filter(Boolean);
+      return [...combinedProducts]
+        .sort((a, b) => {
+          if (a.isTop && b.isTop) {
+            const aIsYellow = a.occasion?.includes('Flores Amarillas');
+            const bIsYellow = b.occasion?.includes('Flores Amarillas');
+            return aIsYellow === bIsYellow ? 0 : aIsYellow ? -1 : 1;
+          }
+          return (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0);
+        })
+        .slice(0, 5)
+        .map(p => p.img)
+        .filter(Boolean);
     }, [combinedProducts]);
 
     const featuredProducts = useMemo(() => {
-      const cheapest = [...combinedProducts].sort((a, b) => a.price - b.price).slice(0, 2);
+      const burbuja = combinedProducts.find(p => p.id === 76);
+      const vanGogh = combinedProducts.find(p => p.id === 79);
       const starWars3 = combinedProducts.find(p => p.id === 12);
-      const bestPadre1 = combinedProducts.find(p => p.id === 8);
+      const anotherCheapest = [...combinedProducts].filter(p => p.id !== 18).sort((a, b) => a.price - b.price)[0];
       
-      const products = [...cheapest];
-      if (starWars3 && !products.find(p => p.id === starWars3.id)) products.push(starWars3);
-      if (bestPadre1 && !products.find(p => p.id === bestPadre1.id)) products.push(bestPadre1);
+      const products = [];
+      if (burbuja) products.push(burbuja);
+      if (vanGogh) products.push(vanGogh);
+      if (starWars3) products.push(starWars3);
+      if (anotherCheapest && !products.find(p => p.id === anotherCheapest.id)) products.push(anotherCheapest);
       
       return products.slice(0, 4);
-    }, []);
+    }, [combinedProducts]);
 
     useEffect(() => {
       const timer = setInterval(() => {
@@ -342,8 +354,10 @@ const App = () => {
             {[
               { name: 'Cumpleaños', filterValue: 'Cumpleaños', icon: <CakeSlice size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-yellow-50' },
               { name: 'Aniversario', filterValue: 'Aniversarios y Parejas', icon: <Heart size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-rose-50' },
-              { name: 'Día del Padre', filterValue: 'Día del Padre', icon: <User size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-blue-50' },
+              { name: 'Para Él', filterValue: 'Para Él', icon: <User size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-blue-50' },
               { name: 'Graduación', filterValue: 'Graduación', icon: <GraduationCap size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-purple-50' },
+              { name: 'Flores Amarillas', filterValue: 'Flores Amarillas', icon: <Flower2 size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-yellow-100' },
+              { name: 'Hotwheels', filterValue: 'Hotwheels', icon: <Car size={40} className="text-gray-800 stroke-[1.5]" />, bg: 'bg-red-50' },
             ].map((item) => (
               <button
                 key={item.name}
@@ -371,7 +385,7 @@ const App = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
               {[
                 { name: 'Sets y Gift Boxes', label: 'Sets y Gift Boxes', img: combinedProducts.find(p => p.category?.includes('Sets y Gift Boxes'))?.img },
-                { name: 'Arreglos de Flores', label: 'Arreglos de Flores', img: combinedProducts.find(p => p.category?.includes('Arreglos de Flores'))?.img },
+                { name: 'Arreglos de Flores', label: 'Arreglos de Flores', img: combinedProducts.find(p => p.name === 'Ramo 5 Girasoles Eternos')?.img || combinedProducts.find(p => p.category?.includes('Arreglos de Flores'))?.img },
                 { name: 'Cuadros', label: 'Cuadros', img: combinedProducts.find(p => p.category?.includes('Cuadros'))?.img },
                 { name: 'Tortas y Repostería', label: 'Tortas y Repostería', img: combinedProducts.find(p => p.category?.includes('Tortas y Repostería'))?.img },
               ].map((cat) => (
@@ -473,8 +487,8 @@ const App = () => {
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-white">
-            <Gift size={24} className="text-rose-500" />
-            <span className="text-xl font-bold">GIFTIFY</span>
+            <img src="/images/logo.png" alt="Momentos 365 Logo" className="w-8 h-8 object-contain bg-white rounded-md p-1" />
+            <span className="text-xl font-bold">Momentos 365</span>
           </div>
           <p className="text-sm leading-relaxed">
             Hacemos que regalar sea una experiencia única. Detalles que emocionan y conectan corazones.
@@ -512,7 +526,7 @@ const App = () => {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 mt-16 pt-8 border-t border-gray-800 text-center text-xs">
-        © 2024 Giftify Regalos. Todos los derechos reservados.
+        © 2024 Momentos 365. Todos los derechos reservados.
       </div>
     </footer>
   );
