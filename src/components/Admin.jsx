@@ -471,22 +471,27 @@ const Admin = () => {
                         <div className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
                           <img src={product.img} alt={product.name} className="w-full h-full object-cover" />
                         </div>
-                        {activeTab === 'catalog' ? (
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[10px] uppercase tracking-wide text-gray-400 font-bold mb-1">
+                            Nombre
+                          </label>
                           <input
                             type="text"
                             value={product.name}
                             onChange={(e) => handleChange(base.id, 'name', e.target.value)}
-                            className="font-bold text-gray-800 text-sm bg-transparent border-b border-transparent hover:border-gray-300 focus:border-rose-500 outline-none w-full max-w-[200px] px-1 py-0.5 transition"
+                            placeholder="Nombre del producto"
+                            className="font-bold text-gray-800 text-sm bg-white border border-gray-200 rounded-lg hover:border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none w-full max-w-[220px] px-2 py-1.5 transition"
                           />
-                        ) : (
-                          <span className="font-bold text-gray-800 text-sm">{product.name}</span>
-                        )}
+                        </div>
                       </div>
                     </td>
 
                     {activeTab === 'catalog' ? (
                       <>
-                        <td className="px-6 py-4 font-bold text-gray-700 align-top pt-8">
+                        <td className="px-6 py-4 font-bold text-gray-700 align-top">
+                          <label className="block text-[10px] uppercase tracking-wide text-gray-400 font-bold mb-1">
+                            Precio
+                          </label>
                           <div className="flex items-center gap-1">
                             <span>S/</span>
                             <input
@@ -495,7 +500,7 @@ const Admin = () => {
                               step="1"
                               value={product.price}
                               onChange={(e) => handleChange(base.id, 'price', e.target.value)}
-                              className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-rose-500 outline-none w-20 px-1 py-0.5 transition"
+                              className="bg-white border border-gray-200 rounded-lg hover:border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none w-24 px-2 py-1.5 transition"
                             />
                           </div>
                         </td>
