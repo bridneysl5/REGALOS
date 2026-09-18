@@ -82,4 +82,18 @@ export const ALL_PRODUCTS = [
 
   { id: 79, name: 'Girasol Eterno Van Gogh', price: 119, isTop: true, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/Girasol eterno Van Gogh.webp' },
   { id: 80, name: 'Macetero Girasol Eterno Con Foto', price: 82, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/macetero girasol eterno con foto.webp' },
+
+  // --- Nuevos Flores Amarillas (precio 0 = no se muestra hasta definirlo) ---
+  { id: 81, name: 'Arreglo Helly Kitty', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/arreglo-helly-kitty.webp' },
+  { id: 82, name: 'Arreglo Sol Dorado Personalizado', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/arreglo-sol-dorado-personalizado.webp' },
+  { id: 83, name: 'Ramo Buchón de Girasoles', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-buchon-de-girasoles.webp' },
+  { id: 84, name: 'Ramo Corazón de Verano', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-corazon-de-verano.webp' },
+  { id: 85, name: 'Ramo de Girasoles Abundante', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-de-girasoles-abundante.webp' },
+  { id: 86, name: 'Ramo Gatitos Floral Amarillo', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-gatitos-floral-amarillo.webp' },
+  { id: 87, name: 'Ramo Girasol, Rosas y Chocolates', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-girasol-rosas-y-chocolates.webp' },
+  { id: 88, name: 'Ramo Girasoles y Melocotón', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-girasoles-y-melocoton.webp' },
+  { id: 89, name: 'Ramo Jardín de Miel', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-jardin-de-miel.webp' },
+  { id: 90, name: 'Ramo Mariposa de Sol y Chocolates', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-mariposa-de-sol-y-chocolates.webp' },
+  { id: 91, name: 'Ramo Sol Rosa Pastel', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-sol-rosa-pastel.webp' },
+  { id: 92, name: 'Torta Macetero Girasol', price: 0, category: ['Tortas y Repostería'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/torta-macetero-girasol.webp' },
 ];
