@@ -10,10 +10,18 @@
 // código.
 // ---------------------------------------------------------------------------
 
-import { collection, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, deleteDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
+import { actualizarProducto, normalizarNombre } from './productosFirebase';
 
 export const OVERRIDES_COLLECTION = 'catalogoRegalos';
+
+/**
+ * Campos que solo existen en la web. Los productos de Firebase guardan aquí
+ * únicamente esto; su nombre, precio, categoría, ocasión y detalles se guardan
+ * en el propio producto de Firebase, para que admin-ventas vea lo mismo.
+ */
+export const CAMPOS_SOLO_WEB = ['isTop', 'isCheap', 'description'];
 
 /** Campos que el admin puede editar y guardar. */
 export const CAMPOS_EDITABLES = [
@@ -76,13 +84,55 @@ export const applyOverrides = (products, overrides) => {
   });
 };
 
-/** Guarda (o actualiza) la edición de un producto. */
-export const saveOverride = (product) =>
-  setDoc(
-    doc(db, OVERRIDES_COLLECTION, String(product.id)),
-    { ...normalizarProducto(product), updatedAt: serverTimestamp() },
-    { merge: true }
-  );
+/** Guarda (o actualiza) la edición de un producto en la colección de la web. */
+export const saveOverride = (product, campos = CAMPOS_EDITABLES) => {
+  const completo = normalizarProducto(product);
+  const datos = { updatedAt: serverTimestamp() };
+  campos.forEach((campo) => {
+    datos[campo] = completo[campo];
+  });
+  return setDoc(doc(db, OVERRIDES_COLLECTION, String(product.id)), datos, { merge: true });
+};
+
+/** Borra una edición guardada. */
+export const eliminarOverride = (id) => deleteDoc(doc(db, OVERRIDES_COLLECTION, String(id)));
+
+/**
+ * Guarda un producto editado en el admin.
+ *
+ * - Si viene de Firebase: nombre, precio, categoría, ocasión y detalles se
+ *   escriben en el propio producto, así admin-ventas y la web ven lo mismo.
+ *   Solo "Top", "Barato" y la descripción quedan aparte, porque admin-ventas
+ *   no tiene esos campos.
+ * - Si vive solo en el código: se guarda todo aparte, ya que no hay producto
+ *   de Firebase que actualizar.
+ */
+export const guardarProducto = async (product) => {
+  if (product?.fuente === 'firebase') {
+    await actualizarProducto(product.id, product);
+    await saveOverride(product, CAMPOS_SOLO_WEB);
+    return;
+  }
+  await saveOverride(product);
+};
+
+/**
+ * Ediciones viejas que quedaron sueltas: se guardaron cuando el producto vivía
+ * en el código y ahora el producto vive en Firebase con otro identificador.
+ * Las emparejamos por nombre para poder recuperarlas.
+ */
+export const overridesHuerfanos = (overrides = {}, catalogo = []) => {
+  const porId = new Set(catalogo.map((p) => String(p.id)));
+  const porNombre = new Map();
+  catalogo.forEach((p) => {
+    if (p.fuente === 'firebase') porNombre.set(normalizarNombre(p.name), p);
+  });
+
+  return Object.entries(overrides)
+    .filter(([id]) => !porId.has(String(id)))
+    .map(([id, datos]) => ({ id, datos, producto: porNombre.get(normalizarNombre(datos.name)) }))
+    .filter((h) => h.producto && h.datos.price && h.datos.price !== h.producto.price);
+};
 
 /** ¿Cambió algo respecto del producto base? */
 export const tieneCambios = (base, editado) => {

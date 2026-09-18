@@ -7,7 +7,7 @@
 // Firebase los productos que todavía solo existen en src/data.js.
 // ---------------------------------------------------------------------------
 
-import { collection, addDoc, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from './firebase';
 
 export const PRODUCTOS_COLLECTION = 'productos';
@@ -32,6 +32,7 @@ const comoLista = (valor) => {
 /** Documento de Firebase -> producto de la tienda. */
 export const desdeFirebase = (id, data) => ({
   id,
+  fuente: 'firebase',
   name: data.nombre || 'Producto sin nombre',
   price: Number(data.precioVenta) || 0,
   category: data.categoria?.length ? data.categoria : ['Todos'],
@@ -119,10 +120,24 @@ export const duplicados = (productos = []) => {
 export const eliminarProducto = (id) => deleteDoc(doc(db, PRODUCTOS_COLLECTION, String(id)));
 
 /**
+ * Guarda los cambios EN EL PRODUCTO de Firebase (el mismo que ve admin-ventas).
+ * Solo toca los campos que ambos sistemas comparten; no pisa costos ni receta.
+ */
+export const actualizarProducto = (id, product) =>
+  updateDoc(doc(db, PRODUCTOS_COLLECTION, String(id)), {
+    nombre: String(product.name || '').trim(),
+    precioVenta: Number(product.price) || 0,
+    categoria: comoLista(product.category),
+    ocasion: comoLista(product.occasion),
+    detalles: comoLista(product.details),
+  });
+
+/**
  * Catálogo final de la tienda: manda Firebase (sin copias repetidas), y de
  * src/data.js solo se suman los productos que no existen allí.
  */
 export const mergeCatalogo = (base = [], enFirebase = []) => {
   const unicos = dedupePorNombre(enFirebase);
-  return [...productosFaltantes(base, unicos), ...unicos];
+  const soloCodigo = productosFaltantes(base, unicos).map((p) => ({ ...p, fuente: 'codigo' }));
+  return [...soloCodigo, ...unicos];
 };

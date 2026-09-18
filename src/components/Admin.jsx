@@ -16,7 +16,9 @@ import { CATEGORIES, OCCASIONS } from '../routes';
 import {
   subscribeOverrides,
   applyOverrides,
-  saveOverride,
+  guardarProducto,
+  overridesHuerfanos,
+  eliminarOverride,
   mensajeDeError,
 } from '../catalogOverrides';
 import {
@@ -26,6 +28,7 @@ import {
   importarProducto,
   duplicados,
   eliminarProducto,
+  actualizarProducto,
 } from '../productosFirebase';
 
 // ---------------------------------------------------------------------------
@@ -220,6 +223,40 @@ const Admin = () => {
     [firebaseProducts, productosCargados]
   );
 
+  // Ediciones que quedaron sueltas al pasar los productos a Firebase.
+  const huerfanos = useMemo(
+    () => (productosCargados ? overridesHuerfanos(overrides, products) : []),
+    [overrides, products, productosCargados]
+  );
+
+  const [recuperando, setRecuperando] = useState(false);
+
+  const recuperarEdiciones = async () => {
+    if (recuperando || huerfanos.length === 0) return;
+    setRecuperando(true);
+    setStatusMessage(null);
+
+    let recuperadas = 0;
+    let primerError = null;
+    for (const { id, datos, producto } of huerfanos) {
+      try {
+        await actualizarProducto(producto.id, { ...producto, price: datos.price });
+        await eliminarOverride(id);
+        recuperadas++;
+      } catch (err) {
+        console.error('[admin] error al recuperar edicion', datos.name, err);
+        if (!primerError) primerError = err;
+      }
+    }
+
+    setRecuperando(false);
+    if (primerError) {
+      avisar('error', `${mensajeDeError(primerError)} (se recuperaron ${recuperadas}).`, 0);
+    } else {
+      avisar('success', `${recuperadas} ${recuperadas === 1 ? 'precio recuperado' : 'precios recuperados'}.`);
+    }
+  };
+
   const pendientes = useMemo(() => Object.keys(editados), [editados]);
   const hayPendientes = pendientes.length > 0;
 
@@ -317,7 +354,7 @@ const Admin = () => {
 
     for (const producto of aGuardar) {
       try {
-        await saveOverride(producto);
+        await guardarProducto(producto);
       } catch (err) {
         console.error('[admin] error al guardar', producto.id, err);
         fallidos.push(producto);
@@ -452,6 +489,38 @@ const Admin = () => {
             : `${products.length} productos`}
         </span>
       </div>
+
+      {huerfanos.length > 0 && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-2xl p-5 flex flex-col gap-4">
+          <div>
+            <p className="font-bold text-blue-900">
+              {huerfanos.length === 1
+                ? 'Hay 1 precio que editaste antes y dejó de aplicarse'
+                : `Hay ${huerfanos.length} precios que editaste antes y dejaron de aplicarse`}
+            </p>
+            <p className="text-sm text-blue-800 mt-1">
+              Se guardaron cuando estos productos vivían en el código. Al pasarlos a Firebase
+              cambiaron de identificador y la edición quedó suelta.
+            </p>
+            <ul className="text-sm text-blue-900 mt-3 space-y-1">
+              {huerfanos.map(({ id, datos, producto }) => (
+                <li key={id}>
+                  <span className="font-semibold">{datos.name}</span>: ahora S/{' '}
+                  {Number(producto.price).toFixed(2)} → tu precio S/ {Number(datos.price).toFixed(2)}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <button
+            onClick={recuperarEdiciones}
+            disabled={recuperando}
+            className="self-start px-6 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {recuperando ? <LoaderCircle size={18} className="animate-spin" /> : <RotateCcw size={18} />}
+            {recuperando ? 'Recuperando...' : 'Recuperar mis precios'}
+          </button>
+        </div>
+      )}
 
       {repetidos.length > 0 && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
