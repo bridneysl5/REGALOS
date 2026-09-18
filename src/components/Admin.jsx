@@ -442,16 +442,16 @@ const Admin = () => {
             <thead>
               {activeTab === 'catalog' ? (
                 <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-sm">
-                  <th className="px-6 py-4 font-semibold">Producto</th>
+                  <th className="px-6 py-4 font-semibold w-[340px] min-w-[340px]">Producto</th>
                   <th className="px-6 py-4 font-semibold">Precio</th>
                   <th className="px-6 py-4 font-semibold text-center">Top</th>
                   <th className="px-6 py-4 font-semibold text-center">Barato</th>
-                  <th className="px-6 py-4 font-semibold w-64">Categoría(s)</th>
-                  <th className="px-6 py-4 font-semibold w-64">Ocasión(es)</th>
+                  <th className="px-6 py-4 font-semibold w-56">Categoría(s)</th>
+                  <th className="px-6 py-4 font-semibold w-56">Ocasión(es)</th>
                 </tr>
               ) : (
                 <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-sm">
-                  <th className="px-6 py-4 font-semibold w-1/4">Producto</th>
+                  <th className="px-6 py-4 font-semibold w-[340px] min-w-[340px]">Producto</th>
                   <th className="px-6 py-4 font-semibold w-1/3">Descripción General</th>
                   <th className="px-6 py-4 font-semibold">Detalles (Puntos Clave)</th>
                 </tr>
@@ -466,7 +466,7 @@ const Admin = () => {
                     key={base.id}
                     className={`transition ${pendiente ? 'bg-amber-50/60' : 'hover:bg-gray-50/50'}`}
                   >
-                    <td className="px-6 py-4 align-top">
+                    <td className="px-6 py-4 align-top w-[340px] min-w-[340px]">
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
                           <img src={product.img} alt={product.name} className="w-full h-full object-cover" />
@@ -480,7 +480,7 @@ const Admin = () => {
                             value={product.name}
                             onChange={(e) => handleChange(base.id, 'name', e.target.value)}
                             placeholder="Nombre del producto"
-                            className="font-bold text-gray-800 text-sm bg-white border border-gray-200 rounded-lg hover:border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none w-full max-w-[220px] px-2 py-1.5 transition"
+                            className="font-bold text-gray-800 text-sm bg-white border border-gray-200 rounded-lg hover:border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none w-full px-2 py-1.5 transition"
                           />
                         </div>
                       </div>
