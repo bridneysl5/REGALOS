@@ -7,7 +7,7 @@
 // Firebase los productos que todavía solo existen en src/data.js.
 // ---------------------------------------------------------------------------
 
-import { collection, addDoc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from './firebase';
 
 export const PRODUCTOS_COLLECTION = 'productos';
@@ -90,10 +90,39 @@ export const importarProducto = (product) =>
   addDoc(collection(db, PRODUCTOS_COLLECTION), haciaFirebase(product));
 
 /**
- * Catálogo final de la tienda: manda Firebase, y de src/data.js solo se suman
- * los productos que no existen allí. Así nada sale duplicado.
+ * Qué tan completo está un producto, para decidir cuál copia conservar
+ * cuando hay dos con el mismo nombre.
  */
-export const mergeCatalogo = (base = [], enFirebase = []) => [
-  ...productosFaltantes(base, enFirebase),
-  ...enFirebase,
-];
+const puntaje = (p) =>
+  (p.details?.length ? 2 : 0) +
+  (String(p.img || '').includes('momentos365.com') ? 1 : 0) +
+  (p.price ? 1 : 0);
+
+/** Deja una sola copia por nombre: la más completa. */
+export const dedupePorNombre = (productos = []) => {
+  const mejor = new Map();
+  productos.forEach((p) => {
+    const clave = normalizarNombre(p.name);
+    const actual = mejor.get(clave);
+    if (!actual || puntaje(p) > puntaje(actual)) mejor.set(clave, p);
+  });
+  return productos.filter((p) => mejor.get(normalizarNombre(p.name)) === p);
+};
+
+/** Las copias sobrantes, las que habría que borrar. */
+export const duplicados = (productos = []) => {
+  const conservar = new Set(dedupePorNombre(productos));
+  return productos.filter((p) => !conservar.has(p));
+};
+
+/** Borra un producto de Firebase. */
+export const eliminarProducto = (id) => deleteDoc(doc(db, PRODUCTOS_COLLECTION, String(id)));
+
+/**
+ * Catálogo final de la tienda: manda Firebase (sin copias repetidas), y de
+ * src/data.js solo se suman los productos que no existen allí.
+ */
+export const mergeCatalogo = (base = [], enFirebase = []) => {
+  const unicos = dedupePorNombre(enFirebase);
+  return [...productosFaltantes(base, unicos), ...unicos];
+};

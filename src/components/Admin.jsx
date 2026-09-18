@@ -10,6 +10,7 @@ import {
   LoaderCircle,
   Lock,
   UploadCloud,
+  Trash2 as TrashIcon,
 } from 'lucide-react';
 import { CATEGORIES, OCCASIONS } from '../routes';
 import {
@@ -23,6 +24,8 @@ import {
   mergeCatalogo,
   productosFaltantes,
   importarProducto,
+  duplicados,
+  eliminarProducto,
 } from '../productosFirebase';
 
 // ---------------------------------------------------------------------------
@@ -161,7 +164,9 @@ const Admin = () => {
 
   const [overrides, setOverrides] = useState({});
   const [firebaseProducts, setFirebaseProducts] = useState([]);
+  const [productosCargados, setProductosCargados] = useState(false);
   const [importando, setImportando] = useState(false);
+  const [limpiando, setLimpiando] = useState(false);
   const [editados, setEditados] = useState({}); // { [id]: producto editado }
   const [guardando, setGuardando] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
@@ -183,8 +188,12 @@ const Admin = () => {
     const unsubOverrides = subscribeOverrides(setOverrides, () =>
       avisar('error', 'No se pudieron leer los datos guardados en Firebase.', 0)
     );
-    const unsubProductos = subscribeProductosRegalos(setFirebaseProducts, () =>
-      avisar('error', 'No se pudo leer el catálogo de Firebase.', 0)
+    const unsubProductos = subscribeProductosRegalos(
+      (docs) => {
+        setFirebaseProducts(docs);
+        setProductosCargados(true);
+      },
+      () => avisar('error', 'No se pudo leer el catálogo de Firebase.', 0)
     );
     return () => {
       unsubOverrides();
@@ -199,9 +208,16 @@ const Admin = () => {
     [firebaseProducts, overrides]
   );
 
+  // Importante: mientras el catálogo de Firebase no haya cargado, TODO parece
+  // faltante. Sin esta guarda, un clic apresurado duplica el catálogo entero.
   const faltantes = useMemo(
-    () => productosFaltantes(ALL_PRODUCTS, firebaseProducts),
-    [firebaseProducts]
+    () => (productosCargados ? productosFaltantes(ALL_PRODUCTS, firebaseProducts) : []),
+    [firebaseProducts, productosCargados]
+  );
+
+  const repetidos = useMemo(
+    () => (productosCargados ? duplicados(firebaseProducts) : []),
+    [firebaseProducts, productosCargados]
   );
 
   const pendientes = useMemo(() => Object.keys(editados), [editados]);
@@ -241,7 +257,7 @@ const Admin = () => {
   };
 
   const importarFaltantes = async () => {
-    if (importando || faltantes.length === 0) return;
+    if (importando || limpiando || !productosCargados || faltantes.length === 0) return;
     setImportando(true);
     setStatusMessage(null);
 
@@ -262,6 +278,31 @@ const Admin = () => {
       avisar('error', `${mensajeDeError(primerError)} (se importaron ${creados}).`, 0);
     } else {
       avisar('success', `${creados} ${creados === 1 ? 'producto importado' : 'productos importados'} a Firebase.`);
+    }
+  };
+
+  const eliminarDuplicados = async () => {
+    if (limpiando || importando || repetidos.length === 0) return;
+    setLimpiando(true);
+    setStatusMessage(null);
+
+    let borrados = 0;
+    let primerError = null;
+    for (const producto of repetidos) {
+      try {
+        await eliminarProducto(producto.id);
+        borrados++;
+      } catch (err) {
+        console.error('[admin] error al borrar duplicado', producto.name, err);
+        if (!primerError) primerError = err;
+      }
+    }
+
+    setLimpiando(false);
+    if (primerError) {
+      avisar('error', `${mensajeDeError(primerError)} (se borraron ${borrados}).`, 0);
+    } else {
+      avisar('success', `${borrados} ${borrados === 1 ? 'copia repetida eliminada' : 'copias repetidas eliminadas'}.`);
     }
   };
 
@@ -412,6 +453,28 @@ const Admin = () => {
         </span>
       </div>
 
+      {repetidos.length > 0 && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+          <div>
+            <p className="font-bold text-red-900">
+              {repetidos.length} {repetidos.length === 1 ? 'producto repetido en Firebase' : 'productos repetidos en Firebase'}
+            </p>
+            <p className="text-sm text-red-800 mt-1">
+              Hay productos cargados dos veces. Al eliminarlos se conserva una sola copia de
+              cada uno, la más completa.
+            </p>
+          </div>
+          <button
+            onClick={eliminarDuplicados}
+            disabled={limpiando || importando}
+            className="shrink-0 px-6 py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 transition shadow disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {limpiando ? <LoaderCircle size={18} className="animate-spin" /> : <TrashIcon size={18} />}
+            {limpiando ? 'Eliminando...' : 'Eliminar repetidos'}
+          </button>
+        </div>
+      )}
+
       {faltantes.length > 0 && (
         <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
           <div>
@@ -427,7 +490,7 @@ const Admin = () => {
           </div>
           <button
             onClick={importarFaltantes}
-            disabled={importando}
+            disabled={importando || limpiando || !productosCargados}
             className="shrink-0 px-6 py-3 rounded-xl font-bold text-white bg-amber-600 hover:bg-amber-700 transition shadow disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {importando ? <LoaderCircle size={18} className="animate-spin" /> : <UploadCloud size={18} />}
