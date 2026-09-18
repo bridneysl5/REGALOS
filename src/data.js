@@ -84,7 +84,7 @@ export const ALL_PRODUCTS = [
   { id: 80, name: 'Macetero Girasol Eterno Con Foto', price: 82, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/macetero girasol eterno con foto.webp' },
 
   // --- Nuevos Flores Amarillas (precio 0 = no se muestra hasta definirlo) ---
-  { id: 81, name: 'Arreglo Helly Kitty', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/arreglo-helly-kitty.webp' },
+  { id: 81, name: 'Arreglo Hello Kitty', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/arreglo-hello-kitty.webp' },
   { id: 82, name: 'Arreglo Sol Dorado Personalizado', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/arreglo-sol-dorado-personalizado.webp' },
   { id: 83, name: 'Ramo Buchón de Girasoles', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-buchon-de-girasoles.webp' },
   { id: 84, name: 'Ramo Corazón de Verano', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-corazon-de-verano.webp' },
