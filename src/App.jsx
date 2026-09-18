@@ -41,6 +41,7 @@ import { hasPrice, formatPrice, pricedTotal, hasUnpricedItems } from './pricing'
 import { subscribeOverrides, applyOverrides } from './catalogOverrides';
 import { subscribeProductosRegalos, mergeCatalogo } from './productosFirebase';
 import { campanaVigente, CAMPANA_OCASION } from './campana';
+import { actualizarSeo } from './seo';
 
 const App = () => {
   const [firebaseProducts, setFirebaseProducts] = useState([]);
@@ -146,19 +147,16 @@ const App = () => {
     lastUrl.current = target;
   }, [view, activeFilter, selectedProduct, pendingProductSlug]);
 
-  // Título de la pestaña acorde a la ruta
+  // Título, descripción, vista previa para redes y datos para Google
   useEffect(() => {
-    const brand = 'Momentos365';
-    let title = `${brand} | Regalos y detalles personalizados`;
-    if (selectedProduct) title = `${selectedProduct.name} | ${brand}`;
-    else if (view === 'shop') {
-      const filtro =
-        (activeFilter.category !== 'Todos' && activeFilter.category) ||
-        (activeFilter.occasion !== 'Todos' && activeFilter.occasion) ||
-        'Catálogo';
-      title = `${filtro} | ${brand}`;
-    }
-    document.title = title;
+    if (view === 'admin') return;
+    actualizarSeo({
+      vista: view,
+      categoria: activeFilter.category,
+      ocasion: activeFilter.occasion,
+      producto: selectedProduct,
+      ruta: window.location.pathname,
+    });
   }, [view, activeFilter, selectedProduct]);
 
   // URL -> estado (botón atrás / adelante del navegador)
