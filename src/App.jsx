@@ -40,6 +40,7 @@ import {
 import { hasPrice, formatPrice, pricedTotal, hasUnpricedItems } from './pricing';
 import { subscribeOverrides, applyOverrides } from './catalogOverrides';
 import { subscribeProductosRegalos, mergeCatalogo } from './productosFirebase';
+import { campanaVigente, CAMPANA_OCASION } from './campana';
 
 const App = () => {
   const [firebaseProducts, setFirebaseProducts] = useState([]);
@@ -400,7 +401,11 @@ const App = () => {
           </div>
 
           <button
-            onClick={() => navigateToShop('category', 'Todos')}
+            onClick={() =>
+              campanaVigente()
+                ? navigateToShop('occasion', CAMPANA_OCASION)
+                : navigateToShop('category', 'Todos')
+            }
             className="mt-12 bg-gray-900 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-rose-500 hover:scale-105 transition-all shadow-xl z-10 flex items-center gap-2"
           >
             Explorar Catálogo <ChevronRight />
