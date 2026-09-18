@@ -166,6 +166,8 @@ const Admin = () => {
   const [guardando, setGuardando] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
   const [search, setSearch] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('Todas');
+  const [filtroOcasion, setFiltroOcasion] = useState('Todas');
   const [activeTab, setActiveTab] = useState('catalog');
 
   const statusTimer = useRef(null);
@@ -297,10 +299,38 @@ const Admin = () => {
     }
   };
 
-  const filteredProducts = useMemo(
-    () => products.filter((p) => verProducto(p).name.toLowerCase().includes(search.toLowerCase())),
-    [products, editados, search]
-  );
+  const SIN_ASIGNAR = 'Sin asignar';
+
+  const filteredProducts = useMemo(() => {
+    const texto = search.trim().toLowerCase();
+
+    const coincide = (valor, filtro) => {
+      if (filtro === 'Todas') return true;
+      const lista = (Array.isArray(valor) ? valor : [valor]).filter(
+        (v) => v && v !== 'Todos'
+      );
+      if (filtro === SIN_ASIGNAR) return lista.length === 0;
+      return lista.includes(filtro);
+    };
+
+    return products.filter((base) => {
+      const p = verProducto(base);
+      return (
+        (!texto || p.name.toLowerCase().includes(texto)) &&
+        coincide(p.category, filtroCategoria) &&
+        coincide(p.occasion, filtroOcasion)
+      );
+    });
+  }, [products, editados, search, filtroCategoria, filtroOcasion]);
+
+  const hayFiltros =
+    search.trim() !== '' || filtroCategoria !== 'Todas' || filtroOcasion !== 'Todas';
+
+  const limpiarFiltros = () => {
+    setSearch('');
+    setFiltroCategoria('Todas');
+    setFiltroOcasion('Todas');
+  };
 
   if (!autorizado) return <PantallaDeAcceso onEntrar={() => setAutorizado(true)} />;
 
@@ -313,14 +343,51 @@ const Admin = () => {
             Edita lo que necesites y presiona <strong>Guardar cambios</strong>.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full md:w-auto">
           <input
             type="text"
             placeholder="Buscar por nombre..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 w-full md:w-64"
+            className="px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 w-full sm:w-56"
           />
+
+          <select
+            value={filtroCategoria}
+            onChange={(e) => setFiltroCategoria(e.target.value)}
+            className="px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer bg-white w-full sm:w-52"
+          >
+            <option value="Todas">Todas las categorías</option>
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+            <option value={SIN_ASIGNAR}>— Sin categoría —</option>
+          </select>
+
+          <select
+            value={filtroOcasion}
+            onChange={(e) => setFiltroOcasion(e.target.value)}
+            className="px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer bg-white w-full sm:w-52"
+          >
+            <option value="Todas">Todas las ocasiones</option>
+            {OCCASIONS.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+            <option value={SIN_ASIGNAR}>— Sin ocasión —</option>
+          </select>
+
+          {hayFiltros && (
+            <button
+              onClick={limpiarFiltros}
+              className="px-4 py-2 rounded-xl font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition whitespace-nowrap"
+            >
+              Limpiar filtros
+            </button>
+          )}
         </div>
       </div>
 
@@ -337,6 +404,12 @@ const Admin = () => {
         >
           Descripciones y Detalles
         </button>
+
+        <span className="ml-auto self-center text-sm text-gray-500 whitespace-nowrap">
+          {hayFiltros
+            ? `${filteredProducts.length} de ${products.length} productos`
+            : `${products.length} productos`}
+        </span>
       </div>
 
       {faltantes.length > 0 && (
@@ -539,7 +612,15 @@ const Admin = () => {
                   <td colSpan={activeTab === 'catalog' ? 6 : 3} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-4xl">🔍</span>
-                      <p className="font-medium">No se encontraron productos con ese nombre.</p>
+                      <p className="font-medium">Ningún producto coincide con los filtros.</p>
+                      {hayFiltros && (
+                        <button
+                          onClick={limpiarFiltros}
+                          className="text-rose-500 font-bold mt-1"
+                        >
+                          Limpiar filtros
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
