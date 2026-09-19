@@ -94,6 +94,18 @@ export const saveOverride = (product, campos = CAMPOS_EDITABLES) => {
   return setDoc(doc(db, OVERRIDES_COLLECTION, String(product.id)), datos, { merge: true });
 };
 
+/**
+ * "Me quedo con el precio de ahora": archiva la edición suelta junto con el
+ * precio que el producto tiene hoy. El aviso deja de salir, y solo vuelve a
+ * aparecer si más adelante ese precio cambia.
+ */
+export const ignorarOverride = (id, precioActual) =>
+  setDoc(
+    doc(db, OVERRIDES_COLLECTION, String(id)),
+    { ignorado: true, ignoradoPrecio: Number(precioActual) || 0, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+
 /** Borra una edición guardada. */
 export const eliminarOverride = (id) => deleteDoc(doc(db, OVERRIDES_COLLECTION, String(id)));
 
@@ -131,7 +143,9 @@ export const overridesHuerfanos = (overrides = {}, catalogo = []) => {
   return Object.entries(overrides)
     .filter(([id]) => !porId.has(String(id)))
     .map(([id, datos]) => ({ id, datos, producto: porNombre.get(normalizarNombre(datos.name)) }))
-    .filter((h) => h.producto && h.datos.price && h.datos.price !== h.producto.price);
+    .filter((h) => h.producto && h.datos.price && h.datos.price !== h.producto.price)
+    // Las que ya decidiste mantener: solo reaparecen si cambia el precio.
+    .filter((h) => !(h.datos.ignorado && Number(h.datos.ignoradoPrecio) === Number(h.producto.price)));
 };
 
 /** ¿Cambió algo respecto del producto base? */

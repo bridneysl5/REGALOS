@@ -19,6 +19,7 @@ import {
   applyOverrides,
   guardarProducto,
   overridesHuerfanos,
+  ignorarOverride,
   eliminarOverride,
   mensajeDeError,
 } from '../catalogOverrides';
@@ -256,6 +257,28 @@ const Admin = () => {
     } else {
       avisar('success', `${recuperadas} ${recuperadas === 1 ? 'precio recuperado' : 'precios recuperados'}.`);
     }
+  };
+
+  const [manteniendo, setManteniendo] = useState(false);
+
+  const mantenerPrecios = async () => {
+    if (manteniendo || huerfanos.length === 0) return;
+    setManteniendo(true);
+    setStatusMessage(null);
+
+    let primerError = null;
+    for (const { id, producto } of huerfanos) {
+      try {
+        await ignorarOverride(id, producto.price);
+      } catch (err) {
+        console.error('[admin] no se pudo archivar la edicion', id, err);
+        if (!primerError) primerError = err;
+      }
+    }
+
+    setManteniendo(false);
+    if (primerError) avisar('error', mensajeDeError(primerError), 0);
+    else avisar('success', 'Listo: nos quedamos con los precios de ahora.');
   };
 
   const pendientes = useMemo(() => Object.keys(editados), [editados]);
@@ -512,7 +535,9 @@ const Admin = () => {
             </p>
             <p className="text-sm text-blue-800 mt-1">
               Se guardaron cuando estos productos vivían en el código. Al pasarlos a Firebase
-              cambiaron de identificador y la edición quedó suelta.
+              cambiaron de identificador y la edición quedó suelta. Si los precios de ahora
+              son los correctos, elige <span className="font-semibold">Mantener precios</span> y
+              este aviso no vuelve a salir, salvo que cambies ese precio más adelante.
             </p>
             <ul className="text-sm text-blue-900 mt-3 space-y-1">
               {huerfanos.map(({ id, datos, producto }) => (
@@ -523,14 +548,24 @@ const Admin = () => {
               ))}
             </ul>
           </div>
-          <button
-            onClick={recuperarEdiciones}
-            disabled={recuperando}
-            className="self-start px-6 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {recuperando ? <LoaderCircle size={18} className="animate-spin" /> : <RotateCcw size={18} />}
-            {recuperando ? 'Recuperando...' : 'Recuperar mis precios'}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={recuperarEdiciones}
+              disabled={recuperando || manteniendo}
+              className="px-6 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {recuperando ? <LoaderCircle size={18} className="animate-spin" /> : <RotateCcw size={18} />}
+              {recuperando ? 'Recuperando...' : 'Recuperar mis precios'}
+            </button>
+            <button
+              onClick={mantenerPrecios}
+              disabled={recuperando || manteniendo}
+              className="px-6 py-3 rounded-xl font-bold text-blue-800 bg-white border border-blue-300 hover:bg-blue-100 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {manteniendo ? <LoaderCircle size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+              {manteniendo ? 'Guardando...' : 'Mantener precios'}
+            </button>
+          </div>
         </div>
       )}
 
