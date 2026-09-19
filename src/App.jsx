@@ -30,6 +30,7 @@ import Filters from './components/Filters';
 import ProductGrid from './components/ProductGrid';
 import MouseHearts from './components/MouseHearts';
 import Admin from './components/Admin';
+import LinksView from './components/LinksView';
 import {
   CATEGORIES,
   OCCASIONS,
@@ -592,6 +593,15 @@ const App = () => {
       </div>
     </footer>
   );
+
+  if (view === 'links') {
+    return (
+      <div className="min-h-screen bg-white font-sans text-gray-900 relative overflow-hidden">
+        <MouseHearts />
+        <LinksView />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 relative overflow-hidden">

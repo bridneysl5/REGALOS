@@ -75,6 +75,7 @@ export const findProductBySlug = (products, slug) => {
  */
 export const buildUrl = ({ view, category, occasion, search, product }) => {
   if (view === 'admin') return '/admin';
+  if (view === 'links') return '/links';
 
   const cat = category && category !== 'Todos' ? category : null;
   const occ = occasion && occasion !== 'Todos' ? occasion : null;
@@ -121,6 +122,11 @@ export const parseUrl = (pathname = '/', search = '', allProducts = []) => {
 
   if (segments[0] === 'admin') {
     state.view = 'admin';
+    return state;
+  }
+  
+  if (segments[0] === 'links' || segments[0] === 'redes') {
+    state.view = 'links';
     return state;
   }
 
