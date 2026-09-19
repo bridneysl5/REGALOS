@@ -13,6 +13,7 @@ import {
   Trash2 as TrashIcon,
 } from 'lucide-react';
 import { CATEGORIES, OCCASIONS } from '../routes';
+import AdminRecuerdos from './AdminRecuerdos';
 import {
   subscribeOverrides,
   applyOverrides,
@@ -483,12 +484,23 @@ const Admin = () => {
           Descripciones y Detalles
         </button>
 
+        <button
+          onClick={() => setActiveTab('recuerdos')}
+          className={`px-6 py-2.5 font-bold rounded-xl transition whitespace-nowrap ${activeTab === 'recuerdos' ? 'bg-rose-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+        >
+          Momentos (QR)
+        </button>
+
         <span className="ml-auto self-center text-sm text-gray-500 whitespace-nowrap">
           {hayFiltros
             ? `${filteredProducts.length} de ${products.length} productos`
             : `${products.length} productos`}
         </span>
       </div>
+
+      {activeTab === 'recuerdos' && <AdminRecuerdos />}
+
+      {activeTab !== 'recuerdos' && (<>
 
       {huerfanos.length > 0 && (
         <div className="mb-6 bg-blue-50 border border-blue-200 rounded-2xl p-5 flex flex-col gap-4">
@@ -766,6 +778,8 @@ const Admin = () => {
           </table>
         </div>
       </div>
+
+      </>)}
 
       {/* Barra fija de guardado */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.06)]">

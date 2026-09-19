@@ -31,6 +31,7 @@ import ProductGrid from './components/ProductGrid';
 import MouseHearts from './components/MouseHearts';
 import Admin from './components/Admin';
 import LinksView from './components/LinksView';
+import AlbumRecuerdo from './components/AlbumRecuerdo';
 import {
   CATEGORIES,
   OCCASIONS,
@@ -114,7 +115,7 @@ const App = () => {
 
   // Estado -> URL
   useEffect(() => {
-    if (view === 'admin') return;
+    if (view === 'admin' || view === 'momento') return;
     if (isPopping.current) {
       isPopping.current = false;
       return;
@@ -150,7 +151,7 @@ const App = () => {
 
   // Título, descripción, vista previa para redes y datos para Google
   useEffect(() => {
-    if (view === 'admin') return;
+    if (view === 'admin' || view === 'momento') return;
     actualizarSeo({
       vista: view,
       categoria: activeFilter.category,
@@ -593,6 +594,10 @@ const App = () => {
       </div>
     </footer>
   );
+
+  if (view === 'momento') {
+    return <AlbumRecuerdo codigo={window.location.pathname.split('/')[2] || ''} />;
+  }
 
   if (view === 'links') {
     return (

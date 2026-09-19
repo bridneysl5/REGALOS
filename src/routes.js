@@ -124,6 +124,11 @@ export const parseUrl = (pathname = '/', search = '', allProducts = []) => {
     state.view = 'admin';
     return state;
   }
+
+  if (segments[0] === 'momento') {
+    state.view = 'momento';
+    return state;
+  }
   
   if (segments[0] === 'links' || segments[0] === 'redes') {
     state.view = 'links';

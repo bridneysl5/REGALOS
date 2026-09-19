@@ -4,11 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build && node scripts/seo.mjs",
+    "dev": "node scripts/musica.mjs && vite",
+    "build": "node scripts/musica.mjs && vite build && node scripts/seo.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "seo": "node scripts/seo.mjs"
+    "seo": "node scripts/seo.mjs",
+    "musica": "node scripts/musica.mjs"
   },
   "dependencies": {
     "firebase": "^12.14.0",
