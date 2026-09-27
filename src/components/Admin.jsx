@@ -789,16 +789,16 @@ const Admin = () => {
                           </details>
                         </td>
                         <td className="px-6 py-4 relative align-top pt-8">
-                          <details className="group">
+                          <details className="group relative">
                             <summary className="bg-white border border-gray-200 hover:border-rose-300 text-gray-800 text-sm rounded-lg p-2 cursor-pointer list-none min-h-[38px] flex items-center justify-between shadow-sm">
                               <span className="truncate pr-2">
                                 {Array.isArray(product.occasion) && product.occasion.length > 0
-                                  ? product.occasion.join(', ')
+                                  ? product.occasion.filter(o => o !== 'Todos').join(', ') || 'Todos'
                                   : 'Seleccionar'}
                               </span>
                               <span className="text-gray-400 text-xs">▼</span>
                             </summary>
-                            <div className="absolute z-20 w-64 right-0 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 max-h-60 overflow-y-auto">
+                            <div className="absolute z-20 w-52 right-0 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 max-h-72 overflow-y-auto">
                               {['Todos (todas las ocasiones)', ...OCCASIONS].map((o) => {
                                 const valor = o === 'Todos (todas las ocasiones)' ? 'Todos' : o;
                                 return (
