@@ -174,6 +174,7 @@ const Admin = () => {
   const [limpiando, setLimpiando] = useState(false);
   const [editados, setEditados] = useState({}); // { [id]: producto editado }
   const [guardando, setGuardando] = useState(false);
+  const [eliminando, setEliminando] = useState(null); // id del producto a confirmar
   const [statusMessage, setStatusMessage] = useState(null);
   const [search, setSearch] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
@@ -364,6 +365,23 @@ const Admin = () => {
       avisar('error', `${mensajeDeError(primerError)} (se borraron ${borrados}).`, 0);
     } else {
       avisar('success', `${borrados} ${borrados === 1 ? 'copia repetida eliminada' : 'copias repetidas eliminadas'}.`);
+    }
+  };
+
+  const handleEliminar = async (producto) => {
+    if (producto.fuente !== 'firebase') {
+      avisar('error', 'Este producto viene del código fuente y no puede eliminarse desde aquí.', 6000);
+      setEliminando(null);
+      return;
+    }
+    try {
+      await eliminarProducto(producto.id);
+      setEditados((prev) => { const n = { ...prev }; delete n[producto.id]; return n; });
+      avisar('success', `"${producto.name}" eliminado.`);
+    } catch (err) {
+      avisar('error', mensajeDeError(err), 0);
+    } finally {
+      setEliminando(null);
     }
   };
 
@@ -647,8 +665,33 @@ const Admin = () => {
                   >
                     <td className="px-6 py-4 align-top w-[340px] min-w-[340px]">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
-                          <img src={product.img} alt={product.name} className="w-full h-full object-cover" />
+                        <div className="relative w-16 h-16 shrink-0 group">
+                          <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden border border-gray-200">
+                            <img src={product.img} alt={product.name} className="w-full h-full object-cover" />
+                          </div>
+                          {eliminando === base.id ? (
+                            <div className="absolute inset-0 bg-red-600 rounded-xl flex flex-col items-center justify-center gap-0.5 z-10">
+                              <span className="text-white text-[10px] font-bold leading-tight text-center px-1">¿Eliminar?</span>
+                              <div className="flex gap-1 mt-0.5">
+                                <button
+                                  onClick={() => handleEliminar(product)}
+                                  className="bg-white text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                >Sí</button>
+                                <button
+                                  onClick={() => setEliminando(null)}
+                                  className="bg-white text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                >No</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setEliminando(base.id)}
+                              title="Eliminar producto"
+                              className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition hidden group-hover:flex z-10"
+                            >
+                              <TrashIcon size={12} />
+                            </button>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <label className="block text-[10px] uppercase tracking-wide text-gray-400 font-bold mb-1">

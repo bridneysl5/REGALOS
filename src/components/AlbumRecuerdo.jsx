@@ -35,15 +35,15 @@ const limitar = (v, a, b) => Math.max(a, Math.min(b, v));
 
 const ESTILOS = `
 .m365-momento{
-  --noche:#0B1E16; --superficie:#143427; --sol:#FFD24A; --sol-claro:#FFE9A8;
+  --noche:#0E0509; --superficie:#200C12; --sol:#FFD24A; --sol-claro:#FFE9A8;
   --ambar:#E39B12; --crema:#F6EEDC; --crema-60:rgba(246,238,220,.62);
   --crema-30:rgba(246,238,220,.26);
   --display:"Bodoni Moda","Didot",Georgia,serif;
   --texto:"Karla","Helvetica Neue",Arial,sans-serif;
   position:fixed; inset:0; z-index:60; overflow-y:auto; overscroll-behavior:contain;
   background:
-    radial-gradient(120% 80% at 50% -10%, #1C4634 0%, rgba(28,70,52,0) 60%),
-    radial-gradient(90% 60% at 10% 110%, #17392A 0%, rgba(23,57,42,0) 70%),
+    radial-gradient(120% 80% at 50% -10%, #3A0D18 0%, rgba(58,13,24,0) 60%),
+    radial-gradient(90% 60% at 10% 110%, #2C0910 0%, rgba(44,9,16,0) 70%),
     var(--noche);
   color:var(--crema); font-family:var(--texto); font-weight:300; line-height:1.6;
   -webkit-font-smoothing:antialiased;
@@ -72,7 +72,7 @@ const ESTILOS = `
 .m365-visor{position:relative;width:100%;max-width:430px;margin:0 auto;aspect-ratio:4/5;
   max-height:min(54vh,520px);background:var(--superficie);border:1px solid rgba(255,210,74,.2);
   border-radius:3px;padding:10px 10px 40px;box-shadow:0 30px 70px -40px rgba(0,0,0,.95)}
-.m365-lienzo{position:absolute;inset:10px;bottom:40px;overflow:hidden;background:#0E2A1F;border-radius:2px}
+.m365-lienzo{position:absolute;inset:10px;bottom:40px;overflow:hidden;background:#180810;border-radius:2px}
 .m365-lienzo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s ease}
 .m365-lienzo img.activa{opacity:1}
 .m365-pie{position:absolute;left:14px;right:14px;bottom:11px;display:flex;justify-content:space-between;
@@ -229,7 +229,7 @@ export default function AlbumRecuerdo({ codigo }) {
 
     // Animación carro HW
     if (hwCarRef.current) {
-      const amp = presionandoRef.current ? p * 10 : 0;
+      const amp = presionandoRef.current ? Math.max(4, p * 14) : 0;
       const tx = amp > 0 ? (Math.sin(Date.now() / 70) * amp).toFixed(1) : 0;
       hwCarRef.current.setAttribute('transform', `translate(${tx},0)`);
     }
