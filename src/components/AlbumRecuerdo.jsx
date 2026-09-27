@@ -147,12 +147,15 @@ export default function AlbumRecuerdo({ codigo }) {
   const ultimoRef = useRef(0);
   const abiertoRef = useRef(false);
   const petalosRef = useRef([]);
+  const hwCarRef = useRef(null);
+  const esHWRef = useRef(false);
 
   const quieto = typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
   const cancion = momento ? cancionPorId(momento.cancion) : null;
   const esHW = momento?.tema === 'hotwheels';
+  esHWRef.current = esHW;
   const fotos = momento?.fotos || [];
 
   // --- tipografías y datos --------------------------------------------------
@@ -195,45 +198,54 @@ export default function AlbumRecuerdo({ codigo }) {
 
   const pintar = useCallback((p) => {
     const tallo = talloRef.current;
-    if (!tallo) return;
-    const largo = largoRef.current;
 
-    const crece = limitar((p - 0.06) / 0.58, 0, 1);
-    tallo.style.strokeDasharray = String(largo);
-    tallo.style.strokeDashoffset = String(largo * (1 - crece));
-    tallo.style.opacity = crece > 0 ? '1' : '0';
-
-    if (semillaRef.current) {
-      semillaRef.current.style.opacity = String(limitar(1 - p / 0.12, 0, 1));
+    if (tallo) {
+      const largo = largoRef.current;
+      const crece = limitar((p - 0.06) / 0.58, 0, 1);
+      tallo.style.strokeDasharray = String(largo);
+      tallo.style.strokeDashoffset = String(largo * (1 - crece));
+      tallo.style.opacity = crece > 0 ? '1' : '0';
+      if (semillaRef.current)
+        semillaRef.current.style.opacity = String(limitar(1 - p / 0.12, 0, 1));
+      hojasRef.current.forEach((nodo, i) => {
+        if (!nodo) return;
+        const [frac, lado, giro] = ANCLAS[i];
+        const t = limitar((crece - frac) / 0.18, 0, 1);
+        const pt = puntoEn(frac);
+        const esc = (0.95 - i * 0.12) * t;
+        nodo.setAttribute('transform',
+          `translate(${pt.x},${pt.y}) scale(${lado * esc},${esc}) rotate(${giro})`);
+        nodo.style.opacity = String(t);
+      });
+      const abre = limitar((p - 0.62) / 0.38, 0, 1);
+      if (florRef.current) {
+        const pt = puntoEn(1);
+        const esc = 0.18 + abre * 0.62;
+        florRef.current.setAttribute('transform',
+          `translate(${pt.x},${pt.y}) scale(${esc}) rotate(${(1 - abre) * -60})`);
+        florRef.current.style.opacity = String(limitar((p - 0.55) / 0.12, 0, 1));
+      }
     }
 
-    hojasRef.current.forEach((nodo, i) => {
-      if (!nodo) return;
-      const [frac, lado, giro] = ANCLAS[i];
-      const t = limitar((crece - frac) / 0.18, 0, 1);
-      const pt = puntoEn(frac);
-      const esc = (0.95 - i * 0.12) * t;
-      nodo.setAttribute('transform',
-        `translate(${pt.x},${pt.y}) scale(${lado * esc},${esc}) rotate(${giro})`);
-      nodo.style.opacity = String(t);
-    });
-
-    const abre = limitar((p - 0.62) / 0.38, 0, 1);
-    if (florRef.current) {
-      const pt = puntoEn(1);
-      const esc = 0.18 + abre * 0.62;
-      florRef.current.setAttribute('transform',
-        `translate(${pt.x},${pt.y}) scale(${esc}) rotate(${(1 - abre) * -60})`);
-      florRef.current.style.opacity = String(limitar((p - 0.55) / 0.12, 0, 1));
+    // Animación carro HW
+    if (hwCarRef.current) {
+      const amp = presionandoRef.current ? p * 10 : 0;
+      const tx = amp > 0 ? (Math.sin(Date.now() / 70) * amp).toFixed(1) : 0;
+      hwCarRef.current.setAttribute('transform', `translate(${tx},0)`);
     }
 
     if (medidorRef.current) medidorRef.current.style.width = `${p * 100}%`;
     if (textoRef.current) {
-      textoRef.current.textContent =
-        p < 0.05 ? 'Mantén presionada la maceta'
-        : p < 0.55 ? 'Sigue… está creciendo'
-        : p < 0.999 ? 'Ya casi florece'
-        : 'Floreció';
+      const hw = esHWRef.current;
+      textoRef.current.textContent = hw
+        ? (p < 0.05 ? '¡Mantén presionado para arrancar!'
+          : p < 0.55 ? '¡Sigue, acelera!'
+          : p < 0.999 ? '¡A toda velocidad!'
+          : '¡Listo!')
+        : (p < 0.05 ? 'Mantén presionada la maceta'
+          : p < 0.55 ? 'Sigue… está creciendo'
+          : p < 0.999 ? 'Ya casi florece'
+          : 'Floreció');
       textoRef.current.classList.toggle('lista', p > 0.55);
     }
   }, []);
@@ -445,39 +457,86 @@ export default function AlbumRecuerdo({ codigo }) {
             <p className="m365-para">{momento.nombre || 'Para ti'}</p>
 
             <button className="m365-maceta" type="button"
-                    aria-label="Mantén presionado para hacer crecer la flor">
-              <svg ref={svgRef} viewBox="-160 -430 320 540" aria-hidden="true">
-                <path ref={talloRef} d={RUTA_TALLO} fill="none" stroke={esHW ? "#888" : "#4C8C5F"}
-                      strokeWidth="9" strokeLinecap="round" />
-                {ANCLAS.map((_, i) => (
-                  <g key={`hoja${i}`} ref={(n) => { hojasRef.current[i] = n; }}>
-                    <path d={HOJA} fill={esHW ? "#444" : "#2C6244"} />
-                  </g>
-                ))}
-                <g ref={florRef}>
-                  {corona(18, esHW ? '#CC0000' : '#E39B12', 10, 'a')}
-                  {corona(18, esHW ? '#FFD700' : '#FFD24A', 0, 'b')}
-                  <circle r="34" fill={esHW ? "#111" : "#4A2F12"} />
-                  <circle r="24" fill={esHW ? "#222" : "#5E3C18"} />
-                  {semillas.map((s, i) => (
-                    <circle key={`s${i}`} cx={s.cx} cy={s.cy} r="2.2" fill={esHW ? "#777" : "#8A5A1E"} />
+                    aria-label={esHW ? 'Mantén presionado para arrancar el carro' : 'Mantén presionado para hacer crecer la flor'}>
+              {esHW ? (
+                <svg ref={svgRef} viewBox="-160 -100 320 200" aria-hidden="true">
+                  {/* Pista */}
+                  <rect x="-160" y="45" width="320" height="30" fill="#1A1A1A"/>
+                  <rect x="-160" y="45" width="320" height="5" fill="#2A2A2A"/>
+                  {[-120,-70,-20,30,80,130].map((x) => (
+                    <rect key={x} x={x} y="56" width="28" height="4" fill="rgba(255,215,0,0.55)" rx="1"/>
                   ))}
-                </g>
-                <g>
-                  <path d="M-62,8 L62,8 L46,96 L-46,96 Z" fill={esHW ? "#CC0000" : "#7A4531"} />
-                  <path d="M-62,8 L62,8 L58,26 L-58,26 Z" fill={esHW ? "#AA0000" : "#8E5439"} />
-                  <ellipse cx="0" cy="10" rx="56" ry="11" fill={esHW ? "#1A0000" : "#2E1B10"} />
-                </g>
-                <g ref={semillaRef}>
-                  <ellipse cx="0" cy="-2" rx="9" ry="13" fill="#E5C88A" transform="rotate(-12)" />
-                  <path d="M0,-14 C 5,-6 5,4 0,11" fill="none" stroke="#8A6B3A" strokeWidth="2" />
-                </g>
-              </svg>
+                  <rect x="-160" y="73" width="320" height="3" fill="#2A2A2A"/>
+                  {/* Carro */}
+                  <g ref={hwCarRef}>
+                    {/* Sombra */}
+                    <ellipse cx="0" cy="50" rx="75" ry="5" fill="rgba(0,0,0,0.45)"/>
+                    {/* Llamas escape */}
+                    <path d="M-82,30 C-96,22 -108,32 -100,26 C-112,18 -124,28 -115,23" stroke="#FF6600" strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.9"/>
+                    <path d="M-82,36 C-94,32 -104,38 -98,35" stroke="#FF9900" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.8"/>
+                    {/* Cuerpo bajo */}
+                    <path d="M-82,44 L82,44 L74,28 L-74,28 Z" fill="#AA0000"/>
+                    {/* Cabina */}
+                    <path d="M-42,28 C-36,8 56,6 68,28 Z" fill="#CC0000"/>
+                    {/* Parabrisas */}
+                    <path d="M-8,27 C2,12 48,11 62,27 Z" fill="#0D0D0D" opacity="0.88"/>
+                    {/* Detalle lateral */}
+                    <path d="M-74,38 L74,38 L74,36 L-74,36 Z" fill="#FFD700" opacity="0.7"/>
+                    {/* Spoiler trasero */}
+                    <rect x="-90" y="18" width="7" height="18" fill="#CC0000" rx="2"/>
+                    <rect x="-94" y="17" width="15" height="4" fill="#FFD700" rx="2"/>
+                    {/* Morro delantero */}
+                    <path d="M82,28 L94,34 L90,44 L82,44 Z" fill="#990000"/>
+                    {/* Faro */}
+                    <rect x="77" y="27" width="10" height="7" fill="#FFE55A" rx="2" opacity="0.9"/>
+                    {/* Texto HW */}
+                    <text x="-5" y="42" fontSize="9" fill="#FFD700" fontWeight="bold" textAnchor="middle" fontFamily="Impact,Arial,sans-serif" letterSpacing="1">HOT WHEELS</text>
+                    {/* Rueda trasera */}
+                    <circle cx="-52" cy="44" r="19" fill="#111"/>
+                    <circle cx="-52" cy="44" r="11" fill="#222"/>
+                    <circle cx="-52" cy="44" r="6" fill="#FFD700"/>
+                    <circle cx="-52" cy="44" r="2.5" fill="#111"/>
+                    {/* Rueda delantera */}
+                    <circle cx="52" cy="44" r="19" fill="#111"/>
+                    <circle cx="52" cy="44" r="11" fill="#222"/>
+                    <circle cx="52" cy="44" r="6" fill="#FFD700"/>
+                    <circle cx="52" cy="44" r="2.5" fill="#111"/>
+                  </g>
+                </svg>
+              ) : (
+                <svg ref={svgRef} viewBox="-160 -430 320 540" aria-hidden="true">
+                  <path ref={talloRef} d={RUTA_TALLO} fill="none" stroke="#4C8C5F"
+                        strokeWidth="9" strokeLinecap="round" />
+                  {ANCLAS.map((_, i) => (
+                    <g key={`hoja${i}`} ref={(n) => { hojasRef.current[i] = n; }}>
+                      <path d={HOJA} fill="#2C6244" />
+                    </g>
+                  ))}
+                  <g ref={florRef}>
+                    {corona(18, '#E39B12', 10, 'a')}
+                    {corona(18, '#FFD24A', 0, 'b')}
+                    <circle r="34" fill="#4A2F12" />
+                    <circle r="24" fill="#5E3C18" />
+                    {semillas.map((s, i) => (
+                      <circle key={`s${i}`} cx={s.cx} cy={s.cy} r="2.2" fill="#8A5A1E" />
+                    ))}
+                  </g>
+                  <g>
+                    <path d="M-62,8 L62,8 L46,96 L-46,96 Z" fill="#7A4531" />
+                    <path d="M-62,8 L62,8 L58,26 L-58,26 Z" fill="#8E5439" />
+                    <ellipse cx="0" cy="10" rx="56" ry="11" fill="#2E1B10" />
+                  </g>
+                  <g ref={semillaRef}>
+                    <ellipse cx="0" cy="-2" rx="9" ry="13" fill="#E5C88A" transform="rotate(-12)" />
+                    <path d="M0,-14 C 5,-6 5,4 0,11" fill="none" stroke="#8A6B3A" strokeWidth="2" />
+                  </g>
+                </svg>
+              )}
             </button>
 
             <div className="m365-medidor" aria-hidden="true"><i ref={medidorRef} /></div>
-            <p className="m365-instruccion" ref={textoRef}>Mantén presionada la maceta</p>
-            <button className="m365-btn" type="button" onClick={abrirAlbum}>Abrir sin esperar</button>
+            <p className="m365-instruccion" ref={textoRef}>{esHW ? '¡Mantén presionado para arrancar!' : 'Mantén presionada la maceta'}</p>
+            <button className="m365-btn" type="button" onClick={abrirAlbum}>{esHW ? '¡Arrancar!' : 'Abrir sin esperar'}</button>
           </div>
         ) : (
           <div className="m365-album">

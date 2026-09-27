@@ -99,7 +99,7 @@ export const ALL_PRODUCTS = [
 
   { id: 93, name: 'Hotweels- Momentos365 (1)', price: 123, category: ['Hotweels'], occasion: ['Todos'], img: '/images/Hotweels/HOTWEELS- MOMENTOS365 (1).png' },
 
-  { id: 94, name: 'Ramo Elegante Hot Wheels', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Todos'], img: '/images/Hotweels/Ramo elegante hot wheels.png' },
-  { id: 95, name: 'Ramo Hot Wheels Spiderman y Venom', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Todos'], img: '/images/Hotweels/Ramo Hot weel 2 spiderman y venom.png' },
-  { id: 96, name: 'Ramo Unitario Hot Wheels', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Todos'], img: '/images/Hotweels/Ramo unitario hot wheels.png' },
+  { id: 94, name: 'Ramo Elegante Hot Wheels', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Hotwheels','Todos'], img: '/images/Hotweels/Ramo elegante hot wheels.png' },
+  { id: 95, name: 'Ramo Hot Wheels Spiderman y Venom', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Hotwheels','Todos'], img: '/images/Hotweels/Ramo Hot weel 2 spiderman y venom.png' },
+  { id: 96, name: 'Ramo Unitario Hot Wheels', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Hotwheels','Todos'], img: '/images/Hotweels/Ramo unitario hot wheels.png' },
 ];

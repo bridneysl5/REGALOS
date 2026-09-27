@@ -408,11 +408,11 @@ const Admin = () => {
 
     const coincide = (valor, filtro) => {
       if (filtro === 'Todas') return true;
-      const lista = (Array.isArray(valor) ? valor : [valor]).filter(
-        (v) => v && v !== 'Todos'
-      );
+      const original = Array.isArray(valor) ? valor : [valor];
+      const lista = original.filter((v) => v && v !== 'Todos');
       if (filtro === SIN_ASIGNAR) return lista.length === 0;
-      return lista.includes(filtro);
+      // 'Todos' actúa como comodín: el producto aparece en cualquier filtro
+      return lista.includes(filtro) || original.includes('Todos');
     };
 
     return products.filter((base) => {

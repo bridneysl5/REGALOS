@@ -252,6 +252,11 @@ export default function AdminRecuerdos() {
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${m.estado === 'listo' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                   {m.estado === 'listo' ? 'ENTREGADO' : 'LIBRE'}
                 </span>
+                {(m.tema && m.tema !== 'flores') && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                    {m.tema === 'hotwheels' ? '🏎️ Hot Wheels' : m.tema}
+                  </span>
+                )}
               </div>
               <p className="text-sm text-gray-900 truncate">{m.nombre || <span className="text-gray-400">sin asignar</span>}</p>
               <p className="text-xs text-gray-500 truncate">{m.pedido || '—'} · {fecha(m.creado)}</p>
