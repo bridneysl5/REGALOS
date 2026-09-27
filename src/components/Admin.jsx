@@ -181,6 +181,7 @@ const Admin = () => {
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
   const [filtroOcasion, setFiltroOcasion] = useState('Todas');
   const [activeTab, setActiveTab] = useState('catalog');
+  const [ocultarFaltantes, setOcultarFaltantes] = useState(false);
 
   const statusTimer = useRef(null);
 
@@ -610,7 +611,7 @@ const Admin = () => {
         </div>
       )}
 
-      {faltantes.length > 0 && (
+      {faltantes.length > 0 && !ocultarFaltantes && (
         <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
           <div>
             <p className="font-bold text-amber-900">
@@ -630,6 +631,13 @@ const Admin = () => {
           >
             {importando ? <LoaderCircle size={18} className="animate-spin" /> : <UploadCloud size={18} />}
             {importando ? 'Importando...' : 'Importar a Firebase'}
+          </button>
+          <button
+            onClick={() => setOcultarFaltantes(true)}
+            disabled={importando}
+            className="shrink-0 px-4 py-3 rounded-xl font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 transition border border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Cancelar
           </button>
         </div>
       )}
@@ -791,27 +799,30 @@ const Admin = () => {
                               <span className="text-gray-400 text-xs">▼</span>
                             </summary>
                             <div className="absolute z-20 w-56 right-6 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 max-h-60 overflow-y-auto">
-                              {OCCASIONS.map((o) => (
+                              {['Todos (todas las ocasiones)', ...OCCASIONS].map((o) => {
+                                const valor = o === 'Todos (todas las ocasiones)' ? 'Todos' : o;
+                                return (
                                 <label
-                                  key={o}
-                                  className="flex items-center gap-2 text-sm cursor-pointer hover:bg-rose-50 p-1.5 rounded transition"
+                                  key={valor}
+                                  className={`flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded transition ${valor === 'Todos' ? 'hover:bg-amber-50 border-b border-gray-100 mb-1 pb-2' : 'hover:bg-rose-50'}`}
                                 >
                                   <input
                                     type="checkbox"
                                     className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer"
-                                    checked={Array.isArray(product.occasion) && product.occasion.includes(o)}
+                                    checked={Array.isArray(product.occasion) && product.occasion.includes(valor)}
                                     onChange={(e) => {
                                       const actual = Array.isArray(product.occasion) ? product.occasion : [];
                                       handleChange(
                                         base.id,
                                         'occasion',
-                                        e.target.checked ? [...actual, o] : actual.filter((i) => i !== o)
+                                        e.target.checked ? [...actual, valor] : actual.filter((i) => i !== valor)
                                       );
                                     }}
                                   />
-                                  {o}
+                                  <span className={valor === 'Todos' ? 'text-amber-700 font-medium' : ''}>{o}</span>
                                 </label>
-                              ))}
+                                );
+                              })}
                             </div>
                           </details>
                         </td>

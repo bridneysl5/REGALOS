@@ -333,21 +333,31 @@ const App = () => {
   const HomeView = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const sliderImages = useMemo(() => {
-      return [...combinedProducts]
-        .sort((a, b) => {
-          if (a.isTop && b.isTop) {
-            const aIsYellow = a.occasion?.includes('Flores Amarillas');
-            const bIsYellow = b.occasion?.includes('Flores Amarillas');
-            return aIsYellow === bIsYellow ? 0 : aIsYellow ? -1 : 1;
-          }
-          return (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0);
-        })
-        .slice(0, 5)
-        .map(p => p.img)
-        .filter(Boolean);
+      const isHWCampaign = campanaVigente() && CAMPANA_OCASION === 'Hotwheels';
+      const hwProducts = combinedProducts.filter(p =>
+        p.category?.includes('Hotweels') || p.occasion?.includes('Hotwheels') ||
+        p.name?.toLowerCase().includes('hot wheel')
+      );
+      const topSorted = [...combinedProducts].sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0));
+      const hwFirst2 = hwProducts.slice(0, 2);
+      const rest = topSorted.filter(p => !hwFirst2.some(h => h.id === p.id)).slice(0, 3);
+      const lista = isHWCampaign ? [...hwFirst2, ...rest] : topSorted.slice(0, 5);
+      return lista.map(p => p.img).filter(Boolean);
     }, [combinedProducts]);
 
     const featuredProducts = useMemo(() => {
+      const isHWCampaign = campanaVigente() && CAMPANA_OCASION === 'Hotwheels';
+      if (isHWCampaign) {
+        const hwProducts = combinedProducts.filter(p =>
+          p.category?.includes('Hotweels') || p.occasion?.includes('Hotwheels') ||
+          p.name?.toLowerCase().includes('hot wheel')
+        ).slice(0, 2);
+        const others = combinedProducts
+          .filter(p => !hwProducts.some(h => h.id === p.id))
+          .sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0))
+          .slice(0, 2);
+        return [...hwProducts, ...others].slice(0, 4);
+      }
       const burbuja = combinedProducts.find(p => p.id === 76);
       const vanGogh = combinedProducts.find(p => p.id === 79);
       const starWars3 = combinedProducts.find(p => p.id === 12);

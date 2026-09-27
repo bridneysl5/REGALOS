@@ -7,13 +7,14 @@
 // ---------------------------------------------------------------------------
 
 export const OCASIONES_CON_PRECIO = ['Flores Amarillas', 'Hotwheels'];
+export const CATEGORIAS_CON_PRECIO = ['Hotweels'];
 
 /** ¿Este producto muestra precio al público? */
 export const hasPrice = (product) => {
   if (!product || !product.price) return false;
-  const occ = product.occasion;
-  const lista = Array.isArray(occ) ? occ : [occ];
-  return lista.some((o) => OCASIONES_CON_PRECIO.includes(o));
+  const occ = Array.isArray(product.occasion) ? product.occasion : [product.occasion].filter(Boolean);
+  const cat = Array.isArray(product.category) ? product.category : [product.category].filter(Boolean);
+  return occ.some((o) => OCASIONES_CON_PRECIO.includes(o)) || cat.some((c) => CATEGORIAS_CON_PRECIO.includes(c));
 };
 
 /** 119 -> "S/ 119.00" */
