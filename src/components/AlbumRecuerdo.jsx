@@ -111,6 +111,19 @@ const ESTILOS = `
 @media (prefers-reduced-motion:reduce){.m365-album{animation:none}}
 `;
 
+const ESTILOS_HW = `
+.m365-momento{
+  --noche:#120000; --superficie:#2A0000; --sol:#FFD700; --sol-claro:#FFE866;
+  --ambar:#CC0000; --crema:#FFFFFF; --crema-60:rgba(255,255,255,.65);
+  --crema-30:rgba(255,255,255,.28);
+  background:
+    radial-gradient(120% 80% at 50% -10%, #3D0000 0%, rgba(61,0,0,0) 60%),
+    radial-gradient(90% 60% at 10% 110%, #2A0000 0%, rgba(42,0,0,0) 70%),
+    var(--noche);
+}
+.m365-reproductor{background:rgba(26,0,0,.93)}
+`;
+
 export default function AlbumRecuerdo({ codigo }) {
   const [estado, setEstado] = useState('cargando'); // cargando | nohay | libre | listo
   const [momento, setMomento] = useState(null);
@@ -139,6 +152,7 @@ export default function AlbumRecuerdo({ codigo }) {
     && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
   const cancion = momento ? cancionPorId(momento.cancion) : null;
+  const esHW = momento?.tema === 'hotwheels';
   const fotos = momento?.fotos || [];
 
   // --- tipografías y datos --------------------------------------------------
@@ -295,7 +309,9 @@ export default function AlbumRecuerdo({ codigo }) {
     vx: -0.22 + Math.random() * 0.44,
     giro: Math.random() * Math.PI * 2,
     vgiro: -0.008 + Math.random() * 0.016,
-    tono: Math.random() < 0.35 ? '255,233,168' : '255,210,74',
+    tono: esHW
+      ? (Math.random() < 0.5 ? '220,30,30' : '255,210,74')
+      : (Math.random() < 0.35 ? '255,233,168' : '255,210,74'),
     alfa: 0.16 + Math.random() * 0.34,
   });
 
@@ -419,6 +435,7 @@ export default function AlbumRecuerdo({ codigo }) {
   return (
     <div className="m365-momento">
       <style>{ESTILOS}</style>
+      {esHW && <style>{ESTILOS_HW}</style>}
       <canvas className="m365-lienzo-petalos" ref={lienzoRef} aria-hidden="true" />
 
       <div className="m365-marco">
@@ -430,26 +447,26 @@ export default function AlbumRecuerdo({ codigo }) {
             <button className="m365-maceta" type="button"
                     aria-label="Mantén presionado para hacer crecer la flor">
               <svg ref={svgRef} viewBox="-160 -430 320 540" aria-hidden="true">
-                <path ref={talloRef} d={RUTA_TALLO} fill="none" stroke="#4C8C5F"
+                <path ref={talloRef} d={RUTA_TALLO} fill="none" stroke={esHW ? "#888" : "#4C8C5F"}
                       strokeWidth="9" strokeLinecap="round" />
                 {ANCLAS.map((_, i) => (
                   <g key={`hoja${i}`} ref={(n) => { hojasRef.current[i] = n; }}>
-                    <path d={HOJA} fill="#2C6244" />
+                    <path d={HOJA} fill={esHW ? "#444" : "#2C6244"} />
                   </g>
                 ))}
                 <g ref={florRef}>
-                  {corona(18, '#E39B12', 10, 'a')}
-                  {corona(18, '#FFD24A', 0, 'b')}
-                  <circle r="34" fill="#4A2F12" />
-                  <circle r="24" fill="#5E3C18" />
+                  {corona(18, esHW ? '#CC0000' : '#E39B12', 10, 'a')}
+                  {corona(18, esHW ? '#FFD700' : '#FFD24A', 0, 'b')}
+                  <circle r="34" fill={esHW ? "#111" : "#4A2F12"} />
+                  <circle r="24" fill={esHW ? "#222" : "#5E3C18"} />
                   {semillas.map((s, i) => (
-                    <circle key={`s${i}`} cx={s.cx} cy={s.cy} r="2.2" fill="#8A5A1E" />
+                    <circle key={`s${i}`} cx={s.cx} cy={s.cy} r="2.2" fill={esHW ? "#777" : "#8A5A1E"} />
                   ))}
                 </g>
                 <g>
-                  <path d="M-62,8 L62,8 L46,96 L-46,96 Z" fill="#7A4531" />
-                  <path d="M-62,8 L62,8 L58,26 L-58,26 Z" fill="#8E5439" />
-                  <ellipse cx="0" cy="10" rx="56" ry="11" fill="#2E1B10" />
+                  <path d="M-62,8 L62,8 L46,96 L-46,96 Z" fill={esHW ? "#CC0000" : "#7A4531"} />
+                  <path d="M-62,8 L62,8 L58,26 L-58,26 Z" fill={esHW ? "#AA0000" : "#8E5439"} />
+                  <ellipse cx="0" cy="10" rx="56" ry="11" fill={esHW ? "#1A0000" : "#2E1B10"} />
                 </g>
                 <g ref={semillaRef}>
                   <ellipse cx="0" cy="-2" rx="9" ry="13" fill="#E5C88A" transform="rotate(-12)" />
@@ -465,7 +482,7 @@ export default function AlbumRecuerdo({ codigo }) {
         ) : (
           <div className="m365-album">
             <div>
-              <p className="m365-eyebrow" style={{ textAlign: 'center' }}>Flores amarillas</p>
+              <p className="m365-eyebrow" style={{ textAlign: 'center' }}>{esHW ? '🏎️ Hot Wheels' : 'Flores amarillas'}</p>
               <h1 className="m365-titulo">Para <em>{momento.nombre || 'ti'}</em></h1>
             </div>
 
