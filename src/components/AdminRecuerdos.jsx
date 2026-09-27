@@ -23,7 +23,7 @@ import {
   urlDelMomento,
 } from '../recuerdos';
 
-const VACIO = { pedido: '', nombre: '', deParte: '', dedicatoria: '', cancion: '' };
+const VACIO = { pedido: '', nombre: '', deParte: '', dedicatoria: '', cancion: '', tema: 'flores' };
 
 const fecha = (ts) => {
   const d = ts?.toDate ? ts.toDate() : null;
@@ -118,6 +118,7 @@ export default function AdminRecuerdos() {
     setForm({
       pedido: m.pedido || '', nombre: m.nombre || '', deParte: m.deParte || '',
       dedicatoria: m.dedicatoria || '', cancion: m.cancion || (MUSICA[0]?.id ?? ''),
+      tema: m.tema || 'flores',
     });
     setFotos([]);
     setPrevias([]);
@@ -317,6 +318,14 @@ export default function AdminRecuerdos() {
                   {MUSICA.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
                 </select>
               </label>
+              <label className="text-sm">
+                <span className="block text-xs font-bold text-gray-500 mb-1">Temática de la tarjeta</span>
+                <select value={form.tema} onChange={(e) => setForm({ ...form, tema: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl bg-white">
+                  <option value="flores">🌻 Flores Amarillas</option>
+                  <option value="hotwheels">🏎️ Hot Wheels</option>
+                </select>
+              </label>
               <label className="text-sm sm:col-span-2">
                 <span className="block text-xs font-bold text-gray-500 mb-1">Dedicatoria</span>
                 <textarea rows="2" value={form.dedicatoria}
@@ -381,24 +390,87 @@ export default function AdminRecuerdos() {
       {/* ----- hoja para imprimir ----- */}
       <div id="hoja-qr" style={{ display: 'none' }}>
         {paraImprimir.map((m) => (
-          <div className="tarjeta-qr" key={m.id}>
-            <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: '20px', margin: '0 0 2mm' }}>
-              Flores amarillas
-            </p>
-            <p style={{ fontSize: '8px', letterSpacing: '.2em', margin: '0 0 4mm', color: '#555' }}>
-              TU ÁLBUM DIGITAL
-            </p>
-            {qrs[m.id] && <img src={qrs[m.id]} alt="" style={{ width: '34mm', height: '34mm' }} />}
-            <p style={{ fontSize: '9px', margin: '4mm 0 1mm' }}>
-              Apunta la cámara de tu celular al código
-            </p>
-            <p style={{ fontSize: '8px', color: '#555', margin: 0 }}>
-              y mantén presionada la maceta para que florezca
-            </p>
-            <p style={{ fontSize: '8px', margin: '4mm 0 0', color: '#888' }}>
-              momentos365.com · {m.id}
-            </p>
-          </div>
+          m.tema === 'hotwheels' ? (
+            /* ---- TARJETA HOT WHEELS ---- */
+            <div className="tarjeta-qr" key={m.id} style={{
+              background: '#cc0000',
+              color: '#fff',
+              position: 'relative',
+              overflow: 'hidden',
+              fontFamily: 'Arial Black, Arial, sans-serif',
+            }}>
+              {/* franja negra diagonal superior */}
+              <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, height: '7mm',
+                background: '#111',
+                clipPath: 'polygon(0 0, 100% 0, 100% 60%, 0 100%)',
+              }} />
+              {/* franja amarilla llama */}
+              <div style={{
+                position: 'absolute', top: '2mm', left: 0, right: 0, height: '3mm',
+                background: 'linear-gradient(90deg,#ff8c00,#ffd700,#ff8c00)',
+                clipPath: 'polygon(0 0, 100% 0, 100% 50%, 0 100%)',
+                opacity: 0.85,
+              }} />
+              <p style={{
+                margin: '9mm 0 0.5mm', fontSize: '13px', letterSpacing: '.12em',
+                textTransform: 'uppercase', color: '#ffd700', textShadow: '1px 1px 0 #000',
+                position: 'relative',
+              }}>
+                🏎️ Hot Wheels
+              </p>
+              <p style={{
+                fontSize: '7px', letterSpacing: '.25em', margin: '0 0 3mm', color: '#ffc', position: 'relative',
+              }}>
+                TU ÁLBUM DIGITAL
+              </p>
+              {qrs[m.id] && (
+                <div style={{
+                  display: 'inline-block', background: '#fff', padding: '2mm', borderRadius: '2mm',
+                  boxShadow: '0 0 0 1.5mm #ffd700', position: 'relative',
+                }}>
+                  <img src={qrs[m.id]} alt="" style={{ width: '30mm', height: '30mm', display: 'block' }} />
+                </div>
+              )}
+              <p style={{ fontSize: '8px', margin: '3mm 0 0.5mm', color: '#fff', position: 'relative' }}>
+                Apunta la cámara al código
+              </p>
+              <p style={{ fontSize: '7.5px', color: '#ffd700', margin: 0, position: 'relative' }}>
+                ¡y a toda velocidad! 🔥
+              </p>
+              {/* franja negra inferior */}
+              <div style={{
+                position: 'absolute', bottom: 0, left: 0, right: 0, height: '6mm',
+                background: '#111',
+                clipPath: 'polygon(0 40%, 100% 0, 100% 100%, 0 100%)',
+              }} />
+              <p style={{
+                fontSize: '7px', margin: '3mm 0 0', color: '#ccc', position: 'relative',
+              }}>
+                momentos365.com · {m.id}
+              </p>
+            </div>
+          ) : (
+            /* ---- TARJETA FLORES AMARILLAS (original) ---- */
+            <div className="tarjeta-qr" key={m.id}>
+              <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: '20px', margin: '0 0 2mm' }}>
+                Flores amarillas
+              </p>
+              <p style={{ fontSize: '8px', letterSpacing: '.2em', margin: '0 0 4mm', color: '#555' }}>
+                TU ÁLBUM DIGITAL
+              </p>
+              {qrs[m.id] && <img src={qrs[m.id]} alt="" style={{ width: '34mm', height: '34mm' }} />}
+              <p style={{ fontSize: '9px', margin: '4mm 0 1mm' }}>
+                Apunta la cámara de tu celular al código
+              </p>
+              <p style={{ fontSize: '8px', color: '#555', margin: 0 }}>
+                y mantén presionada la maceta para que florezca
+              </p>
+              <p style={{ fontSize: '8px', margin: '4mm 0 0', color: '#888' }}>
+                momentos365.com · {m.id}
+              </p>
+            </div>
+          )
         ))}
       </div>
     </div>

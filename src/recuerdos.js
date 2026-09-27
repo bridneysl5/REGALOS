@@ -135,6 +135,7 @@ export const crearLote = async (cantidad = 10, nota = '') => {
       nombre: '',
       dedicatoria: '',
       cancion: '',
+      tema: 'flores',
       pedido: nota,
       fotos: 0,
       creado: serverTimestamp(),
@@ -165,13 +166,14 @@ export const crearMomento = async (datos) => {
 };
 
 /** Llena un código (libre o ya usado) con los datos del pedido. */
-export const asignarMomento = async (codigo, { pedido, nombre, dedicatoria, cancion, deParte }) => {
+export const asignarMomento = async (codigo, { pedido, nombre, dedicatoria, cancion, deParte, tema }) => {
   await updateDoc(doc(db, MOMENTOS, normalizarCodigo(codigo)), {
     pedido: String(pedido || '').trim(),
     nombre: String(nombre || '').trim(),
     dedicatoria: String(dedicatoria || '').trim(),
     deParte: String(deParte || '').trim(),
     cancion: String(cancion || ''),
+    tema: String(tema || 'flores'),
     estado: 'listo',
     asignado: serverTimestamp(),
   });
@@ -181,7 +183,7 @@ export const asignarMomento = async (codigo, { pedido, nombre, dedicatoria, canc
 export const liberarMomento = async (codigo) => {
   await borrarFotos(codigo);
   await updateDoc(doc(db, MOMENTOS, normalizarCodigo(codigo)), {
-    nombre: '', dedicatoria: '', deParte: '', cancion: '', pedido: '',
+    nombre: '', dedicatoria: '', deParte: '', cancion: '', tema: 'flores', pedido: '',
     estado: 'libre', fotos: 0,
   });
 };
