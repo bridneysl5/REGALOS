@@ -175,6 +175,7 @@ const Admin = () => {
   const [editados, setEditados] = useState({}); // { [id]: producto editado }
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(null); // id del producto a confirmar
+  const [hovering, setHovering] = useState(null);   // id con tachito visible
   const [statusMessage, setStatusMessage] = useState(null);
   const [search, setSearch] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
@@ -665,7 +666,9 @@ const Admin = () => {
                   >
                     <td className="px-6 py-4 align-top w-[340px] min-w-[340px]">
                       <div className="flex items-center gap-4">
-                        <div className="relative w-16 h-16 shrink-0 group">
+                        <div className="relative w-16 h-16 shrink-0"
+                          onMouseEnter={() => setHovering(base.id)}
+                          onMouseLeave={() => setHovering(null)}>
                           <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden border border-gray-200">
                             <img src={product.img} alt={product.name} className="w-full h-full object-cover" />
                           </div>
@@ -683,15 +686,15 @@ const Admin = () => {
                                 >No</button>
                               </div>
                             </div>
-                          ) : (
+                          ) : hovering === base.id ? (
                             <button
                               onClick={() => setEliminando(base.id)}
                               title="Eliminar producto"
-                              className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10"
+                              className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md z-10"
                             >
                               <TrashIcon size={12} />
                             </button>
-                          )}
+                          ) : null}
                         </div>
                         <div className="flex-1 min-w-0">
                           <label className="block text-[10px] uppercase tracking-wide text-gray-400 font-bold mb-1">

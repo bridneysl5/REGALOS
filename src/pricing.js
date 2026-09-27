@@ -6,7 +6,7 @@
 // Para activar otra ocasión, basta con agregarla a esta lista.
 // ---------------------------------------------------------------------------
 
-export const OCASIONES_CON_PRECIO = ['Flores Amarillas'];
+export const OCASIONES_CON_PRECIO = ['Flores Amarillas', 'Hotwheels'];
 
 /** ¿Este producto muestra precio al público? */
 export const hasPrice = (product) => {

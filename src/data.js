@@ -97,9 +97,12 @@ export const ALL_PRODUCTS = [
   { id: 91, name: 'Ramo Sol Rosa Pastel', price: 0, category: ['Arreglos de Flores'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/ramo-sol-rosa-pastel.webp' },
   { id: 92, name: 'Torta Macetero Girasol', price: 0, category: ['Tortas y Repostería'], occasion: ['Flores Amarillas'], img: '/images/Flores Amarillas/torta-macetero-girasol.webp' },
 
-  { id: 93, name: 'Hotweels- Momentos365 (1)', price: 123, category: ['Hotweels'], occasion: ['Todos'], img: '/images/Hotweels/HOTWEELS- MOMENTOS365 (1).png' },
 
-  { id: 94, name: 'Ramo Elegante Hot Wheels', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Hotwheels','Todos'], img: '/images/Hotweels/Ramo elegante hot wheels.png' },
-  { id: 95, name: 'Ramo Hot Wheels Spiderman y Venom', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Hotwheels','Todos'], img: '/images/Hotweels/Ramo Hot weel 2 spiderman y venom.png' },
-  { id: 96, name: 'Ramo Unitario Hot Wheels', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Hotwheels','Todos'], img: '/images/Hotweels/Ramo unitario hot wheels.png' },
+  { id: 94, name: 'Ramo Elegante Hot Wheels', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Hotwheels','Todos'], img: '/images/Hotweels/Ramo elegante hot wheels.webp' },
+  { id: 95, name: 'Ramo Hot Wheels Spiderman y Venom', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Hotwheels','Todos'], img: '/images/Hotweels/Ramo Hot weel 2 spiderman y venom.webp' },
+  { id: 96, name: 'Ramo Unitario Hot Wheels', price: 0, category: ['Arreglos de Flores','Sets y Gift Boxes'], occasion: ['Para Él','Hotwheels','Todos'], img: '/images/Hotweels/Ramo unitario hot wheels.webp' },
+
+  { id: 97, name: 'Ramo Hot Weel 2 Spiderman Y Venom', price: 129, category: ['Hotweels'], occasion: ['Todos'], img: '/images/Hotweels/Ramo Hot weel 2 spiderman y venom.png' },
+  { id: 98, name: 'Ramo Elegante Hot Wheels', price: 101, category: ['Hotweels'], occasion: ['Todos'], img: '/images/Hotweels/Ramo elegante hot wheels.png' },
+  { id: 99, name: 'Ramo Unitario Hot Wheels', price: 86, category: ['Hotweels'], occasion: ['Todos'], img: '/images/Hotweels/Ramo unitario hot wheels.png' },
 ];

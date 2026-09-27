@@ -149,6 +149,7 @@ export default function AlbumRecuerdo({ codigo }) {
   const petalosRef = useRef([]);
   const hwCarRef = useRef(null);
   const esHWRef = useRef(false);
+  const botonRef = useRef(null);
 
   const quieto = typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -293,7 +294,7 @@ export default function AlbumRecuerdo({ codigo }) {
       id = requestAnimationFrame(bucle);
     };
 
-    const boton = svgRef.current?.parentElement;
+    const boton = botonRef.current;
     boton?.addEventListener('pointerdown', empezar);
     window.addEventListener('pointerup', soltar);
     window.addEventListener('pointercancel', soltar);
@@ -455,8 +456,8 @@ export default function AlbumRecuerdo({ codigo }) {
             <p className="m365-eyebrow">Un regalo para ti</p>
             <p className="m365-para">{momento.nombre || 'Para ti'}</p>
 
-            <button className="m365-maceta" type="button"
-                    aria-label={esHW ? 'Mantén presionado para arrancar el carro' : 'Mantén presionado para hacer crecer la flor'}>
+            <button ref={botonRef} className="m365-maceta" type="button"
+                    aria-label={esHW ? 'Mantén presionado para arrancar el carro' : 'Mantén presionado para hacer crecer la flor'} touch-action="none">
               {esHW ? (
                 <svg ref={svgRef} viewBox="-160 -100 320 200" aria-hidden="true">
                   {/* Pista */}
