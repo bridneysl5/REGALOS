@@ -265,6 +265,18 @@ export default function AdminRecuerdos() {
                 <button onClick={() => descargarQR(m.id)} className="px-3 py-1.5 rounded-lg border border-gray-200">QR</button>
                 <a href={`/momento/${m.id}`} target="_blank" rel="noopener noreferrer"
                    className="px-3 py-1.5 rounded-lg border border-gray-200">Ver</a>
+                {m.estado === 'libre' && (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`¿Eliminar el código ${m.id}? El QR quedará inválido.`)) return;
+                      try { await eliminarMomento(m.id); }
+                      catch (e) { setError(e.message); }
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-red-200 text-red-600 font-bold"
+                    title="Eliminar código libre">
+                    🗑
+                  </button>
+                )}
               </div>
             </div>
           </div>

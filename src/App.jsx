@@ -189,7 +189,9 @@ const App = () => {
       const matchCat = activeFilter.category === 'Todos' ||
         (Array.isArray(p.category) ? p.category.includes(activeFilter.category) : p.category === activeFilter.category);
       const matchOcc = activeFilter.occasion === 'Todos' ||
-        (Array.isArray(p.occasion) ? p.occasion.includes(activeFilter.occasion) : p.occasion === activeFilter.occasion);
+        (Array.isArray(p.occasion)
+          ? p.occasion.includes(activeFilter.occasion) || p.occasion.includes('Todos')
+          : p.occasion === activeFilter.occasion || p.occasion === 'Todos');
       const matchSearch = !activeFilter.search || activeFilter.search.trim() === '' || 
         p.name.toLowerCase().includes(activeFilter.search.toLowerCase());
       return matchCat && matchOcc && matchSearch;
