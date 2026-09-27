@@ -263,8 +263,7 @@ export default function AlbumRecuerdo({ codigo }) {
   useEffect(() => {
     if (estado !== 'listo' || abierto) return;
     const tallo = talloRef.current;
-    if (!tallo) return;
-    largoRef.current = tallo.getTotalLength();
+    if (tallo) largoRef.current = tallo.getTotalLength();
     progresoRef.current = 0;
     pintar(0);
 

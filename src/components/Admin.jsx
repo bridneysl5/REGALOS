@@ -687,7 +687,7 @@ const Admin = () => {
                             <button
                               onClick={() => setEliminando(base.id)}
                               title="Eliminar producto"
-                              className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition hidden group-hover:flex z-10"
+                              className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10"
                             >
                               <TrashIcon size={12} />
                             </button>
