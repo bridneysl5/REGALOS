@@ -794,9 +794,14 @@ const Admin = () => {
                           <div className="relative">
                           <details className="group">
                             <summary className="bg-white border border-gray-200 hover:border-rose-300 text-gray-800 text-sm rounded-lg p-2 cursor-pointer list-none min-h-[38px] flex items-center justify-between shadow-sm">
-                              <span className="truncate pr-2">
+                              <span className="truncate pr-2 text-xs">
                                 {Array.isArray(product.occasion) && product.occasion.length > 0
-                                  ? product.occasion.filter(o => o !== 'Todos').join(', ') || 'Todos'
+                                  ? product.occasion.map(o => ({
+                                      'Todos':'Todos','Cumpleaños':'Cumple','Graduación':'Grad',
+                                      'Aniversarios y Parejas':'Aniv-Par','Para Ella':'P.Ella',
+                                      'Para Él':'P.Él','Nacimientos':'Nacim',
+                                      'Flores Amarillas':'Fl.Amar','Hotwheels':'HW'
+                                    }[o] || o)).join(', ')
                                   : 'Seleccionar'}
                               </span>
                               <span className="text-gray-400 text-xs">▼</span>
