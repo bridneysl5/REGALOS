@@ -802,12 +802,12 @@ const Admin = () => {
                               <span className="text-gray-400 text-xs">▼</span>
                             </summary>
                             <div className="absolute z-20 w-52 right-0 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 max-h-72 overflow-y-auto">
-                              {['Todos (todas las ocasiones)', ...OCCASIONS].map((o) => {
+                              {['Todos (todas las ocasiones)', 'Hotwheels', ...OCCASIONS.filter(o => o !== 'Hotwheels')].map((o) => {
                                 const valor = o === 'Todos (todas las ocasiones)' ? 'Todos' : o;
                                 return (
                                 <label
                                   key={valor}
-                                  className={`flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded transition ${valor === 'Todos' ? 'hover:bg-amber-50 border-b border-gray-100 mb-1 pb-2' : 'hover:bg-rose-50'}`}
+                                  className={`flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded transition ${valor === 'Todos' ? 'hover:bg-amber-50 border-b border-gray-100 mb-1 pb-2' : valor === 'Hotwheels' ? 'hover:bg-red-50 border-b border-gray-100 mb-1 pb-2' : 'hover:bg-rose-50'}`}
                                 >
                                   <input
                                     type="checkbox"
@@ -822,7 +822,7 @@ const Admin = () => {
                                       );
                                     }}
                                   />
-                                  <span className={valor === 'Todos' ? 'text-amber-700 font-medium' : ''}>{o}</span>
+                                  <span className={valor === 'Todos' ? 'text-amber-700 font-medium' : valor === 'Hotwheels' ? 'text-red-600 font-medium' : ''}>{o}</span>
                                 </label>
                                 );
                               })}
