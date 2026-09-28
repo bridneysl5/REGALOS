@@ -753,7 +753,8 @@ const Admin = () => {
                             onChange={(e) => handleChange(base.id, 'isCheap', e.target.checked)}
                           />
                         </td>
-                        <td className="px-6 py-4 relative align-top pt-8">
+                        <td className="px-6 py-4 align-top pt-8">
+                          <div className="relative">
                           <details className="group">
                             <summary className="bg-white border border-gray-200 hover:border-rose-300 text-gray-800 text-sm rounded-lg p-2 cursor-pointer list-none min-h-[38px] flex items-center justify-between shadow-sm">
                               <span className="truncate pr-2">
@@ -787,9 +788,11 @@ const Admin = () => {
                               ))}
                             </div>
                           </details>
+                          </div>
                         </td>
-                        <td className="px-6 py-4 relative align-top pt-8">
-                          <details className="group relative">
+                        <td className="px-6 py-4 align-top pt-8">
+                          <div className="relative">
+                          <details className="group">
                             <summary className="bg-white border border-gray-200 hover:border-rose-300 text-gray-800 text-sm rounded-lg p-2 cursor-pointer list-none min-h-[38px] flex items-center justify-between shadow-sm">
                               <span className="truncate pr-2">
                                 {Array.isArray(product.occasion) && product.occasion.length > 0
@@ -825,6 +828,7 @@ const Admin = () => {
                               })}
                             </div>
                           </details>
+                          </div>
                         </td>
                       </>
                     ) : (
