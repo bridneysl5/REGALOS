@@ -83,7 +83,7 @@
 <!-- Firebase SDK (module) -->
 <script type="module">
   import { initializeApp }    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, collection, getDocs, getDoc, doc as firestoreDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey:            "AIzaSyCZ2irwGhTw0HdTNYULS49Rl1sKoSBu68E",
@@ -108,25 +108,42 @@
       const app = initializeApp(firebaseConfig);
       const db  = getFirestore(app);
 
+      // First check if the moment document itself exists
+      const momentoRef = firestoreDoc(db, 'momentos', codigo);
+      const momentoSnap = await getDoc(momentoRef);
+
+      if (!momentoSnap.exists()) {
+        showError('Código ' + codigo + ' no encontrado. Verifica el QR.');
+        return;
+      }
+
+      const momentoData = momentoSnap.data();
+      const numFotos = momentoData.fotos || 0;
+
       const fotosSnap = await getDocs(collection(db, 'momentos', codigo, 'fotos'));
       const photos = [];
-      fotosSnap.forEach(doc => {
-        const d = doc.data();
-        if (d.base64 || d.data || d.url) {
+      fotosSnap.forEach(docSnap => {
+        const d = docSnap.data();
+        const src = d.base64 || d.data || d.url || null;
+        if (src) {
           photos.push({
-            id:    doc.id,
-            orden: d.orden || 0,
-            src:   d.base64 || d.data || d.url
+            id:    docSnap.id,
+            orden: d.orden || Number(docSnap.id) || 0,
+            src
           });
         }
       });
 
-      // Sort by doc id (1, 2, 3)
+      // Sort by orden then doc id
       photos.sort((a, b) => (a.orden || Number(a.id)) - (b.orden || Number(b.id)));
       window._arPhotos = photos;
 
       if (photos.length === 0) {
-        showError('No se encontraron fotos para el código ' + codigo + '. Verifica el QR.');
+        if (numFotos > 0) {
+          showError('Este momento tiene ' + numFotos + ' foto(s) registradas pero no se pudieron cargar. Contacta a Momentos365.');
+        } else {
+          showError('Este momento aún no tiene fotos cargadas (código: ' + codigo + ').');
+        }
         return;
       }
 
