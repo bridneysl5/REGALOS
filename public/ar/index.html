@@ -30,17 +30,6 @@
     #error h2   { color: #E84393; margin-bottom: 8px; }
     #error p    { color: #d1d5db; font-size: .9rem; max-width: 280px; }
 
-    #instructions {
-      display: none; position: fixed; bottom: 0; left: 0; right: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,.85));
-      padding: 24px 20px 32px; text-align: center; z-index: 100; color: white;
-    }
-    #instructions p { font-size: .9rem; color: #f9a8d4; }
-    #instructions .marker-hint { 
-      display: inline-block; margin-top: 8px; padding: 6px 16px;
-      border: 2px solid #E84393; border-radius: 20px; font-size: .8rem; color: #E84393;
-    }
-
     #btn-close {
       display: none; position: fixed; top: 16px; right: 16px;
       background: rgba(0,0,0,.6); border: 1px solid #E84393; color: white;
@@ -48,6 +37,47 @@
       z-index: 200;
     }
 
+
+    #scanning {
+      display: none; position: fixed; inset: 0; z-index: 100; pointer-events: none;
+    }
+    #scan-frame {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(70vw, 280px); height: min(70vw, 280px);
+    }
+    #scan-frame .corner { position: absolute; width: 32px; height: 32px; border-color: #E84393; border-style: solid; }
+    #scan-frame .tl { top: 0; left: 0; border-width: 4px 0 0 4px; }
+    #scan-frame .tr { top: 0; right: 0; border-width: 4px 4px 0 0; }
+    #scan-frame .bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; }
+    #scan-frame .br { bottom: 0; right: 0; border-width: 0 4px 4px 0; }
+    #scan-line {
+      position: absolute; left: 4px; right: 4px; height: 2px;
+      background: linear-gradient(90deg, transparent, #E84393, transparent);
+      animation: scanline 2s ease-in-out infinite; top: 4px;
+    }
+    #scan-label {
+      position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%);
+      color: #f9a8d4; font-size: .82rem; white-space: nowrap; text-shadow: 0 1px 4px #000;
+    }
+    #scan-label span { animation: pulse 1.4s ease-in-out infinite; display: inline-block; }
+    #marker-preview {
+      position: fixed; bottom: 110px; right: 16px; width: 72px; height: 72px;
+      z-index: 110; border: 2px solid #E84393; border-radius: 8px;
+      overflow: hidden; background: #fff; display: none;
+    }
+    #marker-preview img { width: 100%; height: 100%; object-fit: cover; }
+    #marker-preview-label {
+      position: fixed; bottom: 92px; right: 0; width: 104px;
+      font-size: .65rem; color: #f9a8d4; z-index: 110; text-align: center; display: none;
+    }
+    #found-msg {
+      display: none; position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+      background: rgba(232,67,147,.9); color: white; padding: 6px 20px;
+      border-radius: 20px; font-size: .85rem; z-index: 200;
+    }
+    @keyframes scanline { 0%,100% { top: 4px; } 50% { top: calc(100% - 6px); } }
+    @keyframes pulse    { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Override A-Frame canvas full screen */
@@ -71,13 +101,25 @@
   <p id="error-msg">No se pudo cargar la experiencia AR. Verifica que tienes acceso a internet y que tu navegador soporta cámara.</p>
 </div>
 
-<!-- Instructions overlay -->
-<div id="instructions">
-  <p>Apunta la cámara al marcador impreso en el regalo</p>
-  <div class="marker-hint">🎯 Busca el sticker Momentos365</div>
+
 </div>
 
 <!-- Close button -->
+
+<!-- Scanning frame -->
+<div id="scanning">
+  <div id="scan-frame">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+    <div id="scan-line"></div>
+    <div id="scan-label"><span>Apunta al marcador del regalo</span></div>
+  </div>
+</div>
+<div id="marker-preview"><img src="/ar/ar_marker.png" alt="marcador"/></div>
+<div id="marker-preview-label">Busca este sticker</div>
+<div id="found-msg">🎉 ¡Marcador detectado!</div>
 <button id="btn-close" onclick="window.history.back()">✕ Cerrar</button>
 
 <!-- Firebase SDK (module) -->
@@ -200,7 +242,7 @@
 
     const sceneHTML = `
 <a-scene
-  mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;"
+  mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: no; uiError: no; uiScanning: no;"
   color-space="sRGB"
   renderer="colorManagement: true"
   vr-mode-ui="enabled: false"
@@ -240,22 +282,24 @@
     // Wait for A-Frame scene to init then start MindAR
     const scene = document.querySelector('a-scene');
     scene.addEventListener('loaded', () => {
-      const arSystem = scene.systems['mindar-image-system'];
-      if (arSystem) {
-        arSystem.start();
-      }
-      // Hide loading, show UI
       document.getElementById('loading').style.display = 'none';
-      document.getElementById('instructions').style.display = 'block';
+      document.getElementById('scanning').style.display = 'block';
+      document.getElementById('marker-preview').style.display = 'block';
+      document.getElementById('marker-preview-label').style.display = 'block';
       document.getElementById('btn-close').style.display = 'block';
     });
-
-    // Handle target found/lost
     scene.addEventListener('targetFound', () => {
-      document.getElementById('instructions').style.display = 'none';
+      document.getElementById('scanning').style.display = 'none';
+      document.getElementById('marker-preview').style.display = 'none';
+      document.getElementById('marker-preview-label').style.display = 'none';
+      const m = document.getElementById('found-msg');
+      m.style.display = 'block';
+      setTimeout(() => { m.style.display = 'none'; }, 3000);
     });
     scene.addEventListener('targetLost', () => {
-      document.getElementById('instructions').style.display = 'block';
+      document.getElementById('scanning').style.display = 'block';
+      document.getElementById('marker-preview').style.display = 'block';
+      document.getElementById('marker-preview-label').style.display = 'block';
     });
   }
 
