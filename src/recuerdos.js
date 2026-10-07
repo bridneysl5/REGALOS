@@ -49,6 +49,7 @@ export const normalizarCodigo = (codigo) =>
   String(codigo || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
 
 export const urlDelMomento = (codigo) => `${SITIO}/momento/${normalizarCodigo(codigo)}`;
+export const urlArMomento  = (codigo) => `${SITIO}/ar/${normalizarCodigo(codigo)}`;
 
 /** Códigos que ya existen, para no repetir ninguno al generar un lote. */
 const codigosOcupados = async () => {

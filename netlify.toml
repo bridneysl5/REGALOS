@@ -4,6 +4,12 @@
   # Carpeta que Netlify debe publicar (donde Vite guarda la web lista)
   publish = "dist"
 
+# Ruta AR: sirve la página standalone antes del catch-all de React
+[[redirects]]
+  from = "/ar/*"
+  to = "/ar/index.html"
+  status = 200
+
 # Redirigir todas las rutas al index.html para que funcione bien en React
 [[redirects]]
   from = "/*"

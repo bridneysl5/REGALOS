@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Momentos365 AR</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; font-family: sans-serif; overflow: hidden; }
+
+    #loading {
+      position: fixed; inset: 0; background: #1a0a1e;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 9999; color: white; text-align: center; padding: 24px;
+    }
+    #loading .logo { font-size: 2.5rem; font-weight: bold; color: #E84393; margin-bottom: 8px; }
+    #loading .sub  { color: #f9a8d4; font-size: 1rem; margin-bottom: 32px; }
+    #loading .spinner {
+      width: 48px; height: 48px; border: 4px solid rgba(232,67,147,.3);
+      border-top-color: #E84393; border-radius: 50%; animation: spin .8s linear infinite;
+    }
+    #loading .hint { margin-top: 24px; font-size: .85rem; color: #d8b4fe; max-width: 280px; }
+
+    #error {
+      display: none; position: fixed; inset: 0; background: #1a0a1e;
+      flex-direction: column; align-items: center; justify-content: center;
+      z-index: 9999; color: white; text-align: center; padding: 24px;
+    }
+    #error .icon { font-size: 3rem; margin-bottom: 12px; }
+    #error h2   { color: #E84393; margin-bottom: 8px; }
+    #error p    { color: #d1d5db; font-size: .9rem; max-width: 280px; }
+
+    #instructions {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,.85));
+      padding: 24px 20px 32px; text-align: center; z-index: 100; color: white;
+    }
+    #instructions p { font-size: .9rem; color: #f9a8d4; }
+    #instructions .marker-hint { 
+      display: inline-block; margin-top: 8px; padding: 6px 16px;
+      border: 2px solid #E84393; border-radius: 20px; font-size: .8rem; color: #E84393;
+    }
+
+    #btn-close {
+      display: none; position: fixed; top: 16px; right: 16px;
+      background: rgba(0,0,0,.6); border: 1px solid #E84393; color: white;
+      padding: 8px 16px; border-radius: 20px; font-size: .85rem; cursor: pointer;
+      z-index: 200;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Override A-Frame canvas full screen */
+    a-scene { width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loading">
+  <div class="logo">✿ Momentos365</div>
+  <div class="sub">Realidad Aumentada</div>
+  <div class="spinner"></div>
+  <div class="hint">Preparando tu experiencia AR... Asegúrate de dar permiso a la cámara.</div>
+</div>
+
+<!-- Error screen -->
+<div id="error">
+  <div class="icon">📷</div>
+  <h2>Algo salió mal</h2>
+  <p id="error-msg">No se pudo cargar la experiencia AR. Verifica que tienes acceso a internet y que tu navegador soporta cámara.</p>
+</div>
+
+<!-- Instructions overlay -->
+<div id="instructions">
+  <p>Apunta la cámara al marcador impreso en el regalo</p>
+  <div class="marker-hint">🎯 Busca el sticker Momentos365</div>
+</div>
+
+<!-- Close button -->
+<button id="btn-close" onclick="window.history.back()">✕ Cerrar</button>
+
+<!-- Firebase SDK (module) -->
+<script type="module">
+  import { initializeApp }    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCZ2irwGhTw0HdTNYULS49Rl1sKoSBu68E",
+    authDomain:        "admin-ventas-691ef.firebaseapp.com",
+    projectId:         "admin-ventas-691ef",
+    storageBucket:     "admin-ventas-691ef.firebasestorage.app",
+    messagingSenderId: "926185738525",
+    appId:             "1:926185738525:web:09e57cf1992b15a33751f4"
+  };
+
+  // ---- Get client code from URL: /ar/ABC123 ----
+  const codigo = window.location.pathname.split('/').filter(Boolean)[1] || '';
+  if (!codigo) {
+    showError('URL inválida. Escanea el código QR del regalo.');
+  } else {
+    window._arCodigo = codigo;
+    loadPhotosAndStart(codigo);
+  }
+
+  async function loadPhotosAndStart(codigo) {
+    try {
+      const app = initializeApp(firebaseConfig);
+      const db  = getFirestore(app);
+
+      const fotosSnap = await getDocs(collection(db, 'momentos', codigo, 'fotos'));
+      const photos = [];
+      fotosSnap.forEach(doc => {
+        const d = doc.data();
+        if (d.base64 || d.data || d.url) {
+          photos.push({
+            id:    doc.id,
+            orden: d.orden || 0,
+            src:   d.base64 || d.data || d.url
+          });
+        }
+      });
+
+      // Sort by doc id (1, 2, 3)
+      photos.sort((a, b) => (a.orden || Number(a.id)) - (b.orden || Number(b.id)));
+      window._arPhotos = photos;
+
+      if (photos.length === 0) {
+        showError('No se encontraron fotos para el código ' + codigo + '. Verifica el QR.');
+        return;
+      }
+
+      // Now load A-Frame + MindAR and build the scene
+      loadARScene(photos);
+    } catch (e) {
+      showError('Error cargando fotos: ' + e.message);
+    }
+  }
+
+  function loadARScene(photos) {
+    // Load A-Frame
+    const aframe = document.createElement('script');
+    aframe.src = 'https://aframe.io/releases/1.4.2/aframe.min.js';
+    aframe.onload = () => {
+      // Load MindAR A-Frame integration
+      const mindar = document.createElement('script');
+      mindar.src = 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js';
+      mindar.onload = () => buildScene(photos);
+      mindar.onerror = () => showError('Error cargando MindAR. Verifica conexión a internet.');
+      document.head.appendChild(mindar);
+    };
+    aframe.onerror = () => showError('Error cargando A-Frame. Verifica conexión a internet.');
+    document.head.appendChild(aframe);
+  }
+
+  function buildScene(photos) {
+    // Pre-load photos as data URLs (they may already be base64)
+    const assets = photos.map((p, i) => {
+      const src = p.src.startsWith('data:') ? p.src : 'data:image/jpeg;base64,' + p.src;
+      return `<img id="arphoto${i}" src="${src}">`;
+    }).join('\n');
+
+    // Calculate layout: photos side by side or stacked
+    const n = photos.length;
+    const planeW = n === 1 ? 1.2 : 0.75;
+    const planeH = planeW * (4/3); // typical photo ratio
+    const gap    = 0.05;
+    const total  = n * planeW + (n-1) * gap;
+    const startX = -total / 2 + planeW / 2;
+
+    const planes = photos.map((_, i) => {
+      const x = startX + i * (planeW + gap);
+      return `
+        <a-plane 
+          src="#arphoto${i}" 
+          position="${x.toFixed(3)} 0 0"
+          width="${planeW}"
+          height="${planeH}"
+          rotation="0 0 0"
+          shadow="receive: false">
+        </a-plane>`;
+    }).join('\n');
+
+    const sceneHTML = `
+<a-scene
+  mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;"
+  color-space="sRGB"
+  renderer="colorManagement: true"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false">
+
+  <a-assets>
+    ${assets}
+  </a-assets>
+
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+  <a-entity mindar-image-target="targetIndex: 0">
+    <a-entity position="0 0.1 0">
+      ${planes}
+      <!-- Pink glow frame -->
+      <a-ring
+        color="#E84393"
+        radius-inner="${(total/2 + 0.02).toFixed(3)}"
+        radius-outer="${(total/2 + 0.06).toFixed(3)}"
+        position="0 ${(-planeH/2 + 0.04).toFixed(3)} -0.01"
+        opacity="0.7">
+      </a-ring>
+      <!-- Momentos365 label -->
+      <a-text
+        value="✿ Momentos365"
+        align="center"
+        color="#E84393"
+        width="2"
+        position="0 ${(-planeH/2 - 0.12).toFixed(3)} 0">
+      </a-text>
+    </a-entity>
+  </a-entity>
+</a-scene>`;
+
+    document.body.insertAdjacentHTML('beforeend', sceneHTML);
+
+    // Wait for A-Frame scene to init then start MindAR
+    const scene = document.querySelector('a-scene');
+    scene.addEventListener('loaded', () => {
+      const arSystem = scene.systems['mindar-image-system'];
+      if (arSystem) {
+        arSystem.start();
+      }
+      // Hide loading, show UI
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('instructions').style.display = 'block';
+      document.getElementById('btn-close').style.display = 'block';
+    });
+
+    // Handle target found/lost
+    scene.addEventListener('targetFound', () => {
+      document.getElementById('instructions').style.display = 'none';
+    });
+    scene.addEventListener('targetLost', () => {
+      document.getElementById('instructions').style.display = 'block';
+    });
+  }
+
+  function showError(msg) {
+    document.getElementById('loading').style.display = 'none';
+    const errDiv = document.getElementById('error');
+    errDiv.style.display = 'flex';
+    document.getElementById('error-msg').textContent = msg;
+  }
+</script>
+
+</body>
+</html>
