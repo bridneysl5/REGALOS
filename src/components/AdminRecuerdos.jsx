@@ -46,7 +46,6 @@ export default function AdminRecuerdos() {
   const [error, setError] = useState(null);
   const [filtro, setFiltro] = useState('todos');
   const [busqueda, setBusqueda] = useState('');
-  const [seleccion, setSeleccion] = useState([]);
   const [editando, setEditando] = useState(null);   // código
   const [form, setForm] = useState(VACIO);
   const [fotos, setFotos] = useState([]);           // File[]
@@ -169,12 +168,6 @@ export default function AdminRecuerdos() {
     a.click();
   };
 
-  const alternar = (codigo) =>
-    setSeleccion((s) => s.includes(codigo) ? s.filter((c) => c !== codigo) : [...s, codigo]);
-
-  const paraImprimir = seleccion.length
-    ? momentos.filter((m) => seleccion.includes(m.id))
-    : visibles;
 
   // --- pantalla -------------------------------------------------------------
   return (
@@ -204,10 +197,7 @@ export default function AdminRecuerdos() {
                   className="px-5 py-2.5 font-bold rounded-xl bg-rose-500 text-white shadow-md hover:bg-rose-600">
             Nuevo momento
           </button>
-          <button onClick={() => window.print()}
-                  className="px-5 py-2.5 font-bold rounded-xl bg-white text-gray-700 border border-gray-200 hover:bg-gray-50">
-            Imprimir tarjetas ({paraImprimir.length})
-          </button>
+
         </div>
       </div>
 
@@ -235,15 +225,12 @@ export default function AdminRecuerdos() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visibles.map((m) => (
           <div key={m.id}
-               className={`bg-white border rounded-2xl p-4 flex gap-4 ${seleccion.includes(m.id) ? 'border-rose-400 ring-2 ring-rose-100' : 'border-gray-200'}`}>
+               className="bg-white border border-gray-200 rounded-2xl p-4 flex gap-4">
             <div className="flex-none">
               {qrs[m.id]
                 ? <img src={qrs[m.id]} alt={`QR ${m.id}`} className="w-24 h-24 rounded-lg border border-gray-100" />
                 : <div className="w-24 h-24 rounded-lg bg-gray-100 animate-pulse" />}
-              <label className="flex items-center gap-1.5 mt-2 text-xs text-gray-500">
-                <input type="checkbox" checked={seleccion.includes(m.id)} onChange={() => alternar(m.id)} />
-                imprimir
-              </label>
+
             </div>
 
             <div className="min-w-0 flex-1">
@@ -266,10 +253,10 @@ export default function AdminRecuerdos() {
                         className="px-3 py-1.5 rounded-lg bg-rose-500 text-white font-bold">
                   {m.estado === 'listo' ? 'Editar' : 'Cargar pedido'}
                 </button>
-                <button onClick={() => copiarLink(m.id)} className="px-3 py-1.5 rounded-lg border border-gray-200">Copiar link</button>
-                <button onClick={() => descargarQR(m.id)} className="px-3 py-1.5 rounded-lg border border-gray-200">QR</button>
+                <button onClick={() => copiarLink(m.id)} className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium">Copiar link</button>
+                <button onClick={() => descargarQR(m.id)} className="px-3 py-1.5 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium">QR</button>
                 <a href={`/momento/${m.id}`} target="_blank" rel="noopener noreferrer"
-                   className="px-3 py-1.5 rounded-lg border border-gray-200">Ver</a>
+                   className="px-3 py-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-medium">Ver</a>
                 {m.estado === 'libre' && (
                   <button
                     onClick={async () => {
