@@ -6,12 +6,12 @@ import {
 } from 'lucide-react';
 import { subscribeVentas, actualizarVenta, eliminarVenta } from '../../adminFirebase';
 
-const ESTADOS = ['pendiente', 'en proceso', 'entregado', 'cancelado'];
+const ESTADOS = ['pendiente', 'haciendo', 'terminada', 'cancelada'];
 const estadoStyle = {
-  pendiente:    'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  'en proceso': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  entregado:    'bg-green-500/20 text-green-400 border-green-500/30',
-  cancelado:    'bg-red-500/20 text-red-400 border-red-500/30',
+  pendiente:  'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  haciendo:   'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  terminada:  'bg-green-500/20 text-green-400 border-green-500/30',
+  cancelada:  'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
 function formatFecha(ts) {
@@ -28,7 +28,7 @@ function ModalDetalle({ venta, onCerrar }) {
       <div className="bg-gray-900 rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl">
         <div className="sticky top-0 bg-gray-900 px-6 pt-5 pb-4 border-b border-gray-800 flex items-center justify-between">
           <div>
-            <p className="text-yellow-400 font-mono font-bold text-lg">{venta.idPedido || '—'}</p>
+            <p className="text-yellow-400 font-mono font-bold text-lg">{venta.idPedido || venta.id?.slice(-8)?.toUpperCase() || '—'}</p>
             <p className="text-gray-400 text-sm">{formatFecha(venta.fecha)}</p>
           </div>
           <button onClick={onCerrar} className="p-2 text-gray-400 hover:text-white"><X size={20}/></button>
@@ -129,7 +129,7 @@ function ModalEditar({ venta, onCerrar, onGuardado }) {
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && onCerrar()}>
       <div className="bg-gray-900 rounded-2xl w-full max-w-md shadow-2xl">
         <div className="px-6 pt-5 pb-4 border-b border-gray-800 flex items-center justify-between">
-          <p className="text-white font-bold">Editar {venta.idPedido || 'Pedido'}</p>
+          <p className="text-white font-bold">Editar {venta.idPedido || venta.id?.slice(-8)?.toUpperCase() || 'Pedido'}</p>
           <button onClick={onCerrar} className="p-2 text-gray-400 hover:text-white"><X size={20}/></button>
         </div>
         <div className="p-6 space-y-4">
@@ -208,7 +208,7 @@ function FilaVenta({ venta, onVerDetalle, onEditar, onEliminar }) {
 
   const toggleEntregado = async () => {
     const nuevo = !venta.entregado;
-    await actualizarVenta(venta.id, { entregado: nuevo, estado: nuevo ? 'entregado' : 'pendiente' });
+    await actualizarVenta(venta.id, { entregado: nuevo, estado: nuevo ? 'terminada' : 'pendiente' });
   };
 
   const cambiarEstado = async (nuevoEstado) => {
@@ -225,7 +225,7 @@ function FilaVenta({ venta, onVerDetalle, onEditar, onEliminar }) {
     <tr className={`border-b border-gray-800 hover:bg-gray-800/50 transition-colors ${venta.entregado ? 'opacity-75' : ''}`}>
       {/* ID + Fecha */}
       <td className="px-4 py-3 whitespace-nowrap">
-        <p className="text-yellow-400 font-mono font-bold text-sm">{venta.idPedido || '—'}</p>
+        <p className="text-yellow-400 font-mono font-bold text-sm">{venta.idPedido || venta.id?.slice(-8)?.toUpperCase() || '—'}</p>
         <p className="text-gray-500 text-xs mt-0.5">{formatFecha(venta.fecha)}</p>
         {venta.cliente && <p className="text-gray-400 text-xs mt-0.5 truncate max-w-[120px]">{venta.cliente}</p>}
       </td>
