@@ -380,48 +380,6 @@ export default function AdminRecuerdos() {
           </div>
         </div>
       )}
-              )}
-              <p style={{ fontSize: '8px', margin: '3mm 0 0.5mm', color: '#fff', position: 'relative' }}>
-                Apunta la cámara al código
-              </p>
-              <p style={{ fontSize: '7.5px', color: '#ffd700', margin: 0, position: 'relative' }}>
-                ¡y a toda velocidad! 🔥
-              </p>
-              {/* franja negra inferior */}
-              <div style={{
-                position: 'absolute', bottom: 0, left: 0, right: 0, height: '6mm',
-                background: '#111',
-                clipPath: 'polygon(0 40%, 100% 0, 100% 100%, 0 100%)',
-              }} />
-              <p style={{
-                fontSize: '7px', margin: '3mm 0 0', color: '#ccc', position: 'relative',
-              }}>
-                momentos365.com · {m.id}
-              </p>
-            </div>
-          ) : (
-            /* ---- TARJETA FLORES AMARILLAS (original) ---- */
-            <div className="tarjeta-qr" key={m.id}>
-              <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: '20px', margin: '0 0 2mm' }}>
-                Flores amarillas
-              </p>
-              <p style={{ fontSize: '8px', letterSpacing: '.2em', margin: '0 0 4mm', color: '#555' }}>
-                TU ÁLBUM DIGITAL
-              </p>
-              {qrs[m.id] && <img src={qrs[m.id]} alt="" style={{ width: '34mm', height: '34mm' }} />}
-              <p style={{ fontSize: '9px', margin: '4mm 0 1mm' }}>
-                Apunta la cámara de tu celular al código
-              </p>
-              <p style={{ fontSize: '8px', color: '#555', margin: 0 }}>
-                y mantén presionada la maceta para que florezca
-              </p>
-              <p style={{ fontSize: '8px', margin: '4mm 0 0', color: '#888' }}>
-                momentos365.com · {m.id}
-              </p>
-            </div>
-          )
-        ))}
-      </div>
     </div>
   );
 }
