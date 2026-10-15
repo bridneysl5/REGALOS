@@ -30,15 +30,6 @@ const fecha = (ts) => {
   return d ? d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
 };
 
-const ESTILO_IMPRESION = `
-@media print{
-  body *{visibility:hidden !important}
-  #hoja-qr, #hoja-qr *{visibility:visible !important}
-  #hoja-qr{position:absolute;inset:0;display:grid !important;
-    grid-template-columns:repeat(2,1fr);gap:0;padding:6mm}
-  .tarjeta-qr{break-inside:avoid;border:1px dashed #cbd5e1;padding:8mm 6mm;text-align:center}
-}
-`;
 
 export default function AdminRecuerdos() {
   const [momentos, setMomentos] = useState([]);
@@ -172,7 +163,6 @@ export default function AdminRecuerdos() {
   // --- pantalla -------------------------------------------------------------
   return (
     <div className="space-y-6">
-      <style>{ESTILO_IMPRESION}</style>
 
       <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-wrap items-end gap-4">
         <div>
@@ -390,51 +380,6 @@ export default function AdminRecuerdos() {
           </div>
         </div>
       )}
-
-      {/* ----- hoja para imprimir ----- */}
-      <div id="hoja-qr" style={{ display: 'none' }}>
-        {paraImprimir.map((m) => (
-          m.tema === 'hotwheels' ? (
-            /* ---- TARJETA HOT WHEELS ---- */
-            <div className="tarjeta-qr" key={m.id} style={{
-              background: '#cc0000',
-              color: '#fff',
-              position: 'relative',
-              overflow: 'hidden',
-              fontFamily: 'Arial Black, Arial, sans-serif',
-            }}>
-              {/* franja negra diagonal superior */}
-              <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, height: '7mm',
-                background: '#111',
-                clipPath: 'polygon(0 0, 100% 0, 100% 60%, 0 100%)',
-              }} />
-              {/* franja amarilla llama */}
-              <div style={{
-                position: 'absolute', top: '2mm', left: 0, right: 0, height: '3mm',
-                background: 'linear-gradient(90deg,#ff8c00,#ffd700,#ff8c00)',
-                clipPath: 'polygon(0 0, 100% 0, 100% 50%, 0 100%)',
-                opacity: 0.85,
-              }} />
-              <p style={{
-                margin: '9mm 0 0.5mm', fontSize: '13px', letterSpacing: '.12em',
-                textTransform: 'uppercase', color: '#ffd700', textShadow: '1px 1px 0 #000',
-                position: 'relative',
-              }}>
-                🏎️ Hot Wheels
-              </p>
-              <p style={{
-                fontSize: '7px', letterSpacing: '.25em', margin: '0 0 3mm', color: '#ffc', position: 'relative',
-              }}>
-                TU ÁLBUM DIGITAL
-              </p>
-              {qrs[m.id] && (
-                <div style={{
-                  display: 'inline-block', background: '#fff', padding: '2mm', borderRadius: '2mm',
-                  boxShadow: '0 0 0 1.5mm #ffd700', position: 'relative',
-                }}>
-                  <img src={qrs[m.id]} alt="" style={{ width: '30mm', height: '30mm', display: 'block' }} />
-                </div>
               )}
               <p style={{ fontSize: '8px', margin: '3mm 0 0.5mm', color: '#fff', position: 'relative' }}>
                 Apunta la cámara al código
