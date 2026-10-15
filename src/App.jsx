@@ -575,8 +575,10 @@ const App = () => {
 
     const pkgProducts = useMemo(() => {
       return combinedProducts.filter(p => {
-        if (pkgOcasion === 'Todos') return true;
         const occs = Array.isArray(p.occasion) ? p.occasion : [p.occasion];
+        const esPaquete = p.paquete === true || occs.includes('Corporativos') || occs.includes('Graduaciones');
+        if (!esPaquete) return false;
+        if (pkgOcasion === 'Todos') return true;
         return occs.includes(pkgOcasion);
       });
     }, [pkgOcasion, combinedProducts]);
@@ -656,8 +658,8 @@ const App = () => {
             ) : (
               <div className="text-center py-20 text-gray-400">
                 <div className="text-5xl mb-4">📦</div>
-                <p className="text-lg font-medium">Próximamente productos para {pkgOcasion}</p>
-                <p className="text-sm mt-2">Estamos preparando opciones especiales</p>
+                <p className="text-lg font-medium">Próximamente paquetes {pkgOcasion !== 'Todos' ? 'de ' + pkgOcasion : 'grupales'}</p>
+                <p className="text-sm mt-2">Estamos cargando opciones especiales — vuelve pronto</p>
               </div>
             )}
           </div>
