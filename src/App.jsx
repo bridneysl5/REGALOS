@@ -569,86 +569,71 @@ const App = () => {
 
 
   const PackagesView = () => {
-    const [pkgFilter, setPkgFilter] = useState('Todos');
-
-    const pkgProducts = useMemo(() => {
-      if (pkgFilter === 'Todos') return combinedProducts;
-      return combinedProducts.filter(p => {
-        const cats = Array.isArray(p.category) ? p.category : [p.category];
-        const occs = Array.isArray(p.occasion) ? p.occasion : [p.occasion];
-        return cats.includes(pkgFilter) || occs.includes(pkgFilter);
-      });
-    }, [pkgFilter, combinedProducts]);
-
-    const filterBtns = ['Todos', 'Corporativos', 'Graduaciones'];
+    const waMsg = (tipo) => {
+      const txt = tipo === 'Corporativos'
+        ? 'Hola MOMENTOS 365, me interesa cotizar un paquete Corporativo (mínimo 4 personas). ¿Me pueden dar más información?'
+        : 'Hola MOMENTOS 365, me interesa cotizar un paquete de Graduaciones (mínimo 4 personas). ¿Me pueden dar más información?';
+      window.open('https://wa.me/51916098803?text=' + encodeURIComponent(txt), '_blank');
+    };
 
     return (
-      <div className="animate-in fade-in duration-500 py-8 max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold font-serif text-gray-900 mb-2">Paquetes</h1>
-          <p className="text-gray-500">Soluciones especiales para cada evento</p>
+      <div className="animate-in fade-in duration-500 py-12 max-w-4xl mx-auto px-4">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold font-serif text-gray-900 mb-3">Paquetes Grupales</h1>
+          <p className="text-gray-500 text-base">Regalos para grupos desde 4 personas. Cuéntanos qué necesitas y te armamos algo especial.</p>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex gap-3 mb-8 justify-center flex-wrap">
-          {filterBtns.map(f => (
-            <button
-              key={f}
-              onClick={() => setPkgFilter(f)}
-              className={"px-6 py-2 rounded-full font-medium transition text-sm " + (
-                pkgFilter === f
-                  ? "bg-[#FF2B5E] text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-[#FF2B5E]"
-              )}
-            >
-              {f}
-            </button>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Corporativos */}
+          <div className="rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-br from-[#0E1322] to-[#1e2a4a] p-8 text-white text-center">
+              <div className="text-5xl mb-3">🏢</div>
+              <h2 className="text-2xl font-bold mb-1">Corporativos</h2>
+              <p className="text-gray-300 text-sm">Regalos para tu equipo, clientes o eventos de empresa</p>
+            </div>
+            <div className="p-6 flex flex-col gap-3 bg-white flex-1">
+              <ul className="text-sm text-gray-600 space-y-2">
+                <li className="flex items-center gap-2"><span className="text-[#FF2B5E] font-bold">✓</span> Mínimo 4 personas</li>
+                <li className="flex items-center gap-2"><span className="text-[#FF2B5E] font-bold">✓</span> Diseño personalizado con tu marca</li>
+                <li className="flex items-center gap-2"><span className="text-[#FF2B5E] font-bold">✓</span> Entrega coordinada</li>
+                <li className="flex items-center gap-2"><span className="text-[#FF2B5E] font-bold">✓</span> Precio especial por volumen</li>
+              </ul>
+              <button
+                onClick={() => waMsg('Corporativos')}
+                className="mt-auto w-full bg-[#0E1322] hover:bg-[#1e2a4a] text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"
+              >
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Cotizar por WhatsApp
+              </button>
+            </div>
+          </div>
+
+          {/* Graduaciones */}
+          <div className="rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-br from-[#FF2B5E] to-[#c0184a] p-8 text-white text-center">
+              <div className="text-5xl mb-3">🎓</div>
+              <h2 className="text-2xl font-bold mb-1">Graduaciones</h2>
+              <p className="text-gray-300 text-sm">Sorprende a toda la promoción con regalos únicos y memorables</p>
+            </div>
+            <div className="p-6 flex flex-col gap-3 bg-white flex-1">
+              <ul className="text-sm text-gray-600 space-y-2">
+                <li className="flex items-center gap-2"><span className="text-[#FF2B5E] font-bold">✓</span> Mínimo 4 personas</li>
+                <li className="flex items-center gap-2"><span className="text-[#FF2B5E] font-bold">✓</span> Personalización con nombre del graduado</li>
+                <li className="flex items-center gap-2"><span className="text-[#FF2B5E] font-bold">✓</span> Opciones para todas las carreras</li>
+                <li className="flex items-center gap-2"><span className="text-[#FF2B5E] font-bold">✓</span> Precio especial por volumen</li>
+              </ul>
+              <button
+                onClick={() => waMsg('Graduaciones')}
+                className="mt-auto w-full bg-[#FF2B5E] hover:bg-[#c0184a] text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"
+              >
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Cotizar por WhatsApp
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Category Banner Cards */}
-        {pkgFilter === 'Todos' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-            <div
-              onClick={() => setPkgFilter('Corporativos')}
-              className="relative rounded-2xl overflow-hidden cursor-pointer group h-40 bg-gradient-to-br from-[#0E1322] to-[#1e2a4a] flex items-center justify-center shadow-lg hover:scale-[1.02] transition"
-            >
-              <div className="text-center text-white">
-                <div className="text-4xl mb-2">🏢</div>
-                <h2 className="text-xl font-bold">Corporativos</h2>
-                <p className="text-sm text-gray-300 mt-1">Regalos para empresas y equipos</p>
-              </div>
-            </div>
-            <div
-              onClick={() => setPkgFilter('Graduaciones')}
-              className="relative rounded-2xl overflow-hidden cursor-pointer group h-40 bg-gradient-to-br from-[#FF2B5E] to-[#c0184a] flex items-center justify-center shadow-lg hover:scale-[1.02] transition"
-            >
-              <div className="text-center text-white">
-                <div className="text-4xl mb-2">🎓</div>
-                <h2 className="text-xl font-bold">Graduaciones</h2>
-                <p className="text-sm text-gray-300 mt-1">Celebra el logro de tus seres queridos</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Products Grid */}
-        {pkgProducts.length > 0 ? (
-          <ProductGrid
-            filteredProducts={pkgProducts}
-            activeFilter={{ category: 'Todos', occasion: 'Todos', search: '' }}
-            setActiveFilter={() => {}}
-            addToCart={addToCart}
-            setSelectedProduct={setSelectedProduct}
-          />
-        ) : (
-          <div className="text-center py-20 text-gray-400">
-            <div className="text-5xl mb-4">📦</div>
-            <p className="text-lg font-medium">Próximamente paquetes de {pkgFilter}</p>
-            <p className="text-sm mt-2">Estamos preparando algo especial para ti</p>
-          </div>
-        )}
+        <p className="text-center text-xs text-gray-400 mt-8">Te respondemos en minutos · Lunes a Sábado 9am – 8pm</p>
       </div>
     );
   };
