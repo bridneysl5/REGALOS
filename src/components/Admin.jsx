@@ -1,926 +1,187 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ALL_PRODUCTS } from '../data';
+import React, { useState, useEffect } from 'react';
 import {
-  AlertCircle,
-  CheckCircle2,
-  Plus,
-  X,
-  Save,
-  RotateCcw,
-  LoaderCircle,
-  Lock,
-  UploadCloud,
-  Trash2 as TrashIcon,
+  LayoutDashboard, Package, Warehouse, ShoppingBag,
+  Users, Camera, LogOut, Menu, X, ChevronRight,
 } from 'lucide-react';
-import { CATEGORIES, OCCASIONS } from '../routes';
+import { loginUsuario } from '../adminFirebase';
+import AdminDashboard from './admin/AdminDashboard';
+import AdminProductos from './admin/AdminProductos';
+import AdminInventario from './admin/AdminInventario';
+import AdminVentas from './admin/AdminVentas';
+import AdminUsuarios from './admin/AdminUsuarios';
 import AdminRecuerdos from './AdminRecuerdos';
-import {
-  subscribeOverrides,
-  applyOverrides,
-  guardarProducto,
-  overridesHuerfanos,
-  ignorarOverride,
-  eliminarOverride,
-  mensajeDeError,
-} from '../catalogOverrides';
-import {
-  subscribeProductosRegalos,
-  mergeCatalogo,
-  productosFaltantes,
-  importarProducto,
-  duplicados,
-  eliminarProducto,
-  actualizarProducto,
-} from '../productosFirebase';
 
-// ---------------------------------------------------------------------------
-// Acceso al panel
-//
-// >>> LA CLAVE DEL ADMIN ES ESTA LINEA <<<
-// Para cambiarla: edita el texto de abajo, guarda el archivo, y sube el cambio
-// (git commit + git push). Netlify publica solo en 1-2 minutos.
-//
-// Es una traba para curiosos, no seguridad fuerte: la clave viaja dentro del
-// codigo de la pagina, asi que quien sepa buscar puede verla. La proteccion
-// de verdad seria un login con Firebase Authentication.
-//
-// (Tambien se puede definir la variable VITE_ADMIN_PASSWORD en Netlify; si
-// existe, esa manda sobre la clave de abajo.)
-// ---------------------------------------------------------------------------
-const CLAVE_ADMIN = import.meta.env.VITE_ADMIN_PASSWORD || '1502';
-const SESION_KEY = 'm365_admin';
+// ─── Sesión ────────────────────────────────────────────────────────────────
+const SESION_KEY = 'm365_admin_v2';
+const leerSesion = () => { try { const s = sessionStorage.getItem(SESION_KEY); return s ? JSON.parse(s) : null; } catch { return null; } };
+const guardarSesion = (u) => { try { sessionStorage.setItem(SESION_KEY, JSON.stringify(u)); } catch {} };
+const borrarSesion = () => { try { sessionStorage.removeItem(SESION_KEY); } catch {} };
 
-const leerSesion = () => {
-  try {
-    return sessionStorage.getItem(SESION_KEY) === 'ok';
-  } catch {
-    return false;
-  }
-};
+// Clave maestra (dueño) — sin Firebase
+const CLAVE_OWNER = import.meta.env.VITE_ADMIN_PASSWORD || '1502';
+const OWNER = { id: '__owner__', nombre: 'Admin', rol: 'owner' };
 
-const guardarSesion = () => {
-  try {
-    sessionStorage.setItem(SESION_KEY, 'ok');
-  } catch {
-    /* modo incógnito: no pasa nada, sólo no recuerda */
-  }
-};
-
-const PantallaDeAcceso = ({ onEntrar }) => {
+// ─── Pantalla de login ─────────────────────────────────────────────────────
+const Login = ({ onEntrar }) => {
+  const [nombre, setNombre] = useState('');
   const [clave, setClave] = useState('');
-  const [error, setError] = useState(false);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState('');
 
-  const entrar = (e) => {
+  const entrar = async (e) => {
     e.preventDefault();
-    if (clave === CLAVE_ADMIN) {
-      guardarSesion();
-      onEntrar();
-    } else {
-      setError(true);
-      setClave('');
-    }
+    setError('');
+    setCargando(true);
+    // Primero prueba clave maestra
+    if (clave === CLAVE_OWNER) { guardarSesion(OWNER); onEntrar(OWNER); setCargando(false); return; }
+    // Luego busca en Firebase
+    const u = await loginUsuario(nombre, clave);
+    setCargando(false);
+    if (u) { guardarSesion(u); onEntrar(u); }
+    else { setError('Usuario o clave incorrectos'); setClave(''); }
   };
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4">
-      <form
-        onSubmit={entrar}
-        className="bg-white border border-gray-100 shadow-sm rounded-2xl p-8 w-full max-w-sm flex flex-col gap-4"
-      >
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div className="bg-rose-50 text-rose-500 p-3 rounded-full">
-            <Lock size={24} />
+    <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-4">
+            <img src="/images/logo.png" alt="logo" className="w-12 h-12 object-contain bg-white rounded-xl p-1" />
+            <span className="text-white font-bold text-xl">Momentos365</span>
           </div>
-          <h2 className="text-xl font-bold text-gray-900">Panel de administración</h2>
-          <p className="text-sm text-gray-500">Ingresa la clave para continuar.</p>
+          <p className="text-gray-400 text-sm">Panel de administración</p>
         </div>
-
-        <input
-          type="password"
-          value={clave}
-          onChange={(e) => {
-            setClave(e.target.value);
-            setError(false);
-          }}
-          placeholder="Clave"
-          autoFocus
-          className="border border-gray-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none rounded-xl px-4 py-3 transition"
-        />
-
-        {error && (
-          <p className="text-sm text-red-600 flex items-center gap-2">
-            <AlertCircle size={16} /> Clave incorrecta.
-          </p>
-        )}
-
-        <button
-          type="submit"
-          className="bg-gray-900 hover:bg-rose-500 text-white py-3 rounded-xl font-bold transition"
-        >
-          Entrar
-        </button>
-      </form>
-    </div>
-  );
-};
-
-// ---------------------------------------------------------------------------
-
-const DetailsEditor = ({ details, onChange }) => {
-  const lista = Array.isArray(details) ? details : [];
-
-  const actualizar = (index, value) =>
-    onChange(lista.map((d, i) => (i === index ? value : d)));
-
-  return (
-    <div className="flex flex-col gap-2 min-w-[300px]">
-      {lista.map((detail, idx) => (
-        <div key={idx} className="flex gap-2 items-center">
-          <input
-            value={detail}
-            onChange={(e) => actualizar(idx, e.target.value)}
-            placeholder="Ej. Contiene 1 peluche..."
-            className="border border-gray-200 focus:border-rose-500 outline-none rounded-lg px-3 py-2 flex-1 text-sm bg-white"
-          />
-          <button
-            type="button"
-            onClick={() => onChange(lista.filter((_, i) => i !== idx))}
-            className="text-red-400 hover:text-red-600 transition p-1"
-          >
-            <X size={16} />
+        <form onSubmit={entrar} className="bg-[#111827] rounded-2xl p-6 border border-white/10 shadow-2xl space-y-4">
+          <div>
+            <label className="block text-gray-400 text-xs mb-1.5 font-medium uppercase tracking-wider">Usuario</label>
+            <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tu nombre"
+              className="w-full bg-[#1f2937] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#FF2B5E] transition" />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1.5 font-medium uppercase tracking-wider">Clave</label>
+            <input type="password" value={clave} onChange={e => setClave(e.target.value)} placeholder="••••••"
+              className="w-full bg-[#1f2937] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#FF2B5E] transition" required />
+          </div>
+          {error && <p className="text-red-400 text-xs bg-red-400/10 rounded-lg px-3 py-2">{error}</p>}
+          <button type="submit" disabled={cargando}
+            className="w-full bg-[#FF2B5E] hover:bg-[#e0194a] text-white font-bold py-2.5 rounded-xl transition disabled:opacity-60">
+            {cargando ? 'Verificando...' : 'Ingresar'}
           </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => onChange([...lista, ''])}
-        className="text-sm text-rose-500 font-bold flex items-center gap-1 hover:text-rose-600 transition w-fit mt-1"
-      >
-        <Plus size={16} /> Añadir detalle
-      </button>
+        </form>
+      </div>
     </div>
   );
 };
 
-// ---------------------------------------------------------------------------
+// ─── Sidebar nav ───────────────────────────────────────────────────────────
+const NAV = [
+  { key: 'dashboard',  label: 'Dashboard',   icon: LayoutDashboard, roles: ['owner','admin','ventas','inventario'] },
+  { key: 'productos',  label: 'Productos',   icon: Package,         roles: ['owner','admin'] },
+  { key: 'inventario', label: 'Inventario',  icon: Warehouse,       roles: ['owner','admin','inventario'] },
+  { key: 'ventas',     label: 'Ventas',      icon: ShoppingBag,     roles: ['owner','admin','ventas','inventario'] },
+  { key: 'usuarios',   label: 'Usuarios',    icon: Users,           roles: ['owner','admin'] },
+  { key: 'recuerdos',  label: 'Momentos QR', icon: Camera,          roles: ['owner','admin'] },
+];
 
+// ─── Admin principal ───────────────────────────────────────────────────────
 const Admin = () => {
-  const [autorizado, setAutorizado] = useState(leerSesion);
+  const [usuario, setUsuario] = useState(leerSesion);
+  const [seccion, setSeccion] = useState('dashboard');
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const [overrides, setOverrides] = useState({});
-  const [firebaseProducts, setFirebaseProducts] = useState([]);
-  const [productosCargados, setProductosCargados] = useState(false);
-  const [importando, setImportando] = useState(false);
-  const [limpiando, setLimpiando] = useState(false);
-  const [editados, setEditados] = useState({}); // { [id]: producto editado }
-  const [guardando, setGuardando] = useState(false);
-  const [eliminando, setEliminando] = useState(null); // id del producto a confirmar
-  const [hovering, setHovering] = useState(null);   // id con tachito visible
-  const [statusMessage, setStatusMessage] = useState(null);
-  const [search, setSearch] = useState('');
-  const [filtroCategoria, setFiltroCategoria] = useState('Todas');
-  const [filtroOcasion, setFiltroOcasion] = useState('Todas');
-  const [activeTab, setActiveTab] = useState('catalog');
-  const [ocultarFaltantes, setOcultarFaltantes] = useState(false);
+  const salir = () => { borrarSesion(); setUsuario(null); };
+  const nav = usuario ? NAV.filter(n => n.roles.includes(usuario.rol)) : [];
+  const irA = (k) => { setSeccion(k); setMenuOpen(false); };
 
-  const statusTimer = useRef(null);
+  if (!usuario) return <Login onEntrar={u => { setUsuario(u); setSeccion('dashboard'); }} />;
 
-  const avisar = (type, text, ms = 4000) => {
-    setStatusMessage({ type, text });
-    clearTimeout(statusTimer.current);
-    if (ms) statusTimer.current = setTimeout(() => setStatusMessage(null), ms);
+  const SECCIONES = {
+    dashboard:  <AdminDashboard usuario={usuario} />,
+    productos:  <AdminProductos />,
+    inventario: <AdminInventario />,
+    ventas:     <AdminVentas usuario={usuario} />,
+    usuarios:   <AdminUsuarios sesion={usuario} />,
+    recuerdos:  <AdminRecuerdos />,
   };
-
-  useEffect(() => {
-    if (!autorizado) return undefined;
-    const unsubOverrides = subscribeOverrides(setOverrides, () =>
-      avisar('error', 'No se pudieron leer los datos guardados en Firebase.', 0)
-    );
-    const unsubProductos = subscribeProductosRegalos(
-      (docs) => {
-        setFirebaseProducts(docs);
-        setProductosCargados(true);
-      },
-      () => avisar('error', 'No se pudo leer el catálogo de Firebase.', 0)
-    );
-    return () => {
-      unsubOverrides();
-      unsubProductos();
-    };
-  }, [autorizado]);
-
-  // El mismo catálogo que ve la tienda: Firebase manda, y de src/data.js solo
-  // se suman los productos que aún no existen allí.
-  const products = useMemo(
-    () => applyOverrides(mergeCatalogo(ALL_PRODUCTS, firebaseProducts), overrides),
-    [firebaseProducts, overrides]
-  );
-
-  // Importante: mientras el catálogo de Firebase no haya cargado, TODO parece
-  // faltante. Sin esta guarda, un clic apresurado duplica el catálogo entero.
-  const faltantes = useMemo(
-    () => (productosCargados ? productosFaltantes(ALL_PRODUCTS, firebaseProducts) : []),
-    [firebaseProducts, productosCargados]
-  );
-
-  const repetidos = useMemo(
-    () => (productosCargados ? duplicados(firebaseProducts) : []),
-    [firebaseProducts, productosCargados]
-  );
-
-  // Ediciones que quedaron sueltas al pasar los productos a Firebase.
-  const huerfanos = useMemo(
-    () => (productosCargados ? overridesHuerfanos(overrides, products) : []),
-    [overrides, products, productosCargados]
-  );
-
-  const [recuperando, setRecuperando] = useState(false);
-
-  const recuperarEdiciones = async () => {
-    if (recuperando || huerfanos.length === 0) return;
-    setRecuperando(true);
-    setStatusMessage(null);
-
-    let recuperadas = 0;
-    let primerError = null;
-    for (const { id, datos, producto } of huerfanos) {
-      try {
-        await actualizarProducto(producto.id, { ...producto, price: datos.price });
-        await eliminarOverride(id);
-        recuperadas++;
-      } catch (err) {
-        console.error('[admin] error al recuperar edicion', datos.name, err);
-        if (!primerError) primerError = err;
-      }
-    }
-
-    setRecuperando(false);
-    if (primerError) {
-      avisar('error', `${mensajeDeError(primerError)} (se recuperaron ${recuperadas}).`, 0);
-    } else {
-      avisar('success', `${recuperadas} ${recuperadas === 1 ? 'precio recuperado' : 'precios recuperados'}.`);
-    }
-  };
-
-  const [manteniendo, setManteniendo] = useState(false);
-
-  const mantenerPrecios = async () => {
-    if (manteniendo || huerfanos.length === 0) return;
-    setManteniendo(true);
-    setStatusMessage(null);
-
-    let primerError = null;
-    for (const { id, producto } of huerfanos) {
-      try {
-        await ignorarOverride(id, producto.price);
-      } catch (err) {
-        console.error('[admin] no se pudo archivar la edicion', id, err);
-        if (!primerError) primerError = err;
-      }
-    }
-
-    setManteniendo(false);
-    if (primerError) avisar('error', mensajeDeError(primerError), 0);
-    else avisar('success', 'Listo: nos quedamos con los precios de ahora.');
-  };
-
-  const pendientes = useMemo(() => Object.keys(editados), [editados]);
-  const hayPendientes = pendientes.length > 0;
-
-  // Aviso del navegador si intenta cerrar con cambios sin guardar.
-  useEffect(() => {
-    if (!hayPendientes) return undefined;
-    const handler = (e) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [hayPendientes]);
-
-  useEffect(() => () => clearTimeout(statusTimer.current), []);
-
-  /** Producto tal como debe mostrarse: la edición en curso, o lo guardado. */
-  const verProducto = (product) => editados[product.id] || product;
-
-  const handleChange = (id, field, newValue) => {
-    setEditados((prev) => {
-      const base = prev[id] || products.find((p) => p.id === id);
-      if (!base) return prev;
-      const actualizado = {
-        ...base,
-        [field]: field === 'price' ? (newValue === '' ? '' : Number(newValue)) : newValue,
-      };
-      return { ...prev, [id]: actualizado };
-    });
-  };
-
-  const descartar = () => {
-    setEditados({});
-    avisar('success', 'Cambios descartados.');
-  };
-
-  const importarFaltantes = async () => {
-    if (importando || limpiando || !productosCargados || faltantes.length === 0) return;
-    setImportando(true);
-    setStatusMessage(null);
-
-    let creados = 0;
-    let primerError = null;
-    for (const producto of faltantes) {
-      try {
-        await importarProducto(producto);
-        creados++;
-      } catch (err) {
-        console.error('[admin] error al importar', producto.name, err);
-        if (!primerError) primerError = err;
-      }
-    }
-
-    setImportando(false);
-    if (primerError) {
-      avisar('error', `${mensajeDeError(primerError)} (se importaron ${creados}).`, 0);
-    } else {
-      avisar('success', `${creados} ${creados === 1 ? 'producto importado' : 'productos importados'} a Firebase.`);
-    }
-  };
-
-  const eliminarDuplicados = async () => {
-    if (limpiando || importando || repetidos.length === 0) return;
-    setLimpiando(true);
-    setStatusMessage(null);
-
-    let borrados = 0;
-    let primerError = null;
-    for (const producto of repetidos) {
-      try {
-        await eliminarProducto(producto.id);
-        borrados++;
-      } catch (err) {
-        console.error('[admin] error al borrar duplicado', producto.name, err);
-        if (!primerError) primerError = err;
-      }
-    }
-
-    setLimpiando(false);
-    if (primerError) {
-      avisar('error', `${mensajeDeError(primerError)} (se borraron ${borrados}).`, 0);
-    } else {
-      avisar('success', `${borrados} ${borrados === 1 ? 'copia repetida eliminada' : 'copias repetidas eliminadas'}.`);
-    }
-  };
-
-  const handleEliminar = async (producto) => {
-    if (producto.fuente !== 'firebase') {
-      avisar('error', 'Este producto viene del código fuente y no puede eliminarse desde aquí.', 6000);
-      setEliminando(null);
-      return;
-    }
-    try {
-      await eliminarProducto(producto.id);
-      setEditados((prev) => { const n = { ...prev }; delete n[producto.id]; return n; });
-      avisar('success', `"${producto.name}" eliminado.`);
-    } catch (err) {
-      avisar('error', mensajeDeError(err), 0);
-    } finally {
-      setEliminando(null);
-    }
-  };
-
-  const guardar = async () => {
-    if (!hayPendientes || guardando) return;
-    setGuardando(true);
-    setStatusMessage(null);
-
-    const aGuardar = pendientes.map((id) => editados[id]);
-    const fallidos = [];
-    let primerError = null;
-
-    for (const producto of aGuardar) {
-      try {
-        await guardarProducto(producto);
-      } catch (err) {
-        console.error('[admin] error al guardar', producto.id, err);
-        fallidos.push(producto);
-        if (!primerError) primerError = err;
-      }
-    }
-
-    setGuardando(false);
-
-    if (fallidos.length === 0) {
-      setEditados({});
-      avisar('success', `Guardado (${aGuardar.length} ${aGuardar.length === 1 ? 'producto' : 'productos'}).`);
-    } else {
-      const quedan = {};
-      fallidos.forEach((p) => {
-        quedan[p.id] = p;
-      });
-      setEditados(quedan);
-      avisar('error', mensajeDeError(primerError), 0);
-    }
-  };
-
-  const SIN_ASIGNAR = 'Sin asignar';
-
-  const filteredProducts = useMemo(() => {
-    const texto = search.trim().toLowerCase();
-
-    const coincide = (valor, filtro) => {
-      if (filtro === 'Todas') return true;
-      const original = Array.isArray(valor) ? valor : [valor];
-      const lista = original.filter((v) => v && v !== 'Todos');
-      if (filtro === SIN_ASIGNAR) return lista.length === 0;
-      // 'Todos' actúa como comodín: el producto aparece en cualquier filtro
-      return lista.includes(filtro) || original.includes('Todos');
-    };
-
-    return products.filter((base) => {
-      const p = verProducto(base);
-      return (
-        (!texto || p.name.toLowerCase().includes(texto)) &&
-        coincide(p.category, filtroCategoria) &&
-        coincide(p.occasion, filtroOcasion)
-      );
-    });
-  }, [products, editados, search, filtroCategoria, filtroOcasion]);
-
-  const hayFiltros =
-    search.trim() !== '' || filtroCategoria !== 'Todas' || filtroOcasion !== 'Todas';
-
-  const limpiarFiltros = () => {
-    setSearch('');
-    setFiltroCategoria('Todas');
-    setFiltroOcasion('Todas');
-  };
-
-  if (!autorizado) return <PantallaDeAcceso onEntrar={() => setAutorizado(true)} />;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">Administrador de Catálogo</h2>
-          <p className="text-gray-500">
-            Edita lo que necesites y presiona <strong>Guardar cambios</strong>.
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full md:w-auto">
-          <input
-            type="text"
-            placeholder="Buscar por nombre..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 w-full sm:w-56"
-          />
+    <div className="min-h-screen bg-[#0d1117] flex text-white">
 
-          <select
-            value={filtroCategoria}
-            onChange={(e) => setFiltroCategoria(e.target.value)}
-            className="px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer bg-white w-full sm:w-52"
-          >
-            <option value="Todas">Todas las categorías</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-            <option value={SIN_ASIGNAR}>— Sin categoría —</option>
-          </select>
-
-          <select
-            value={filtroOcasion}
-            onChange={(e) => setFiltroOcasion(e.target.value)}
-            className="px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer bg-white w-full sm:w-52"
-          >
-            <option value="Todas">Todas las ocasiones</option>
-            {OCCASIONS.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-            <option value={SIN_ASIGNAR}>— Sin ocasión —</option>
-          </select>
-
-          {hayFiltros && (
-            <button
-              onClick={limpiarFiltros}
-              className="px-4 py-2 rounded-xl font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition whitespace-nowrap"
-            >
-              Limpiar filtros
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        <button
-          onClick={() => setActiveTab('catalog')}
-          className={`px-6 py-2.5 font-bold rounded-xl transition whitespace-nowrap ${activeTab === 'catalog' ? 'bg-rose-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
-        >
-          Catálogo General
-        </button>
-        <button
-          onClick={() => setActiveTab('descriptions')}
-          className={`px-6 py-2.5 font-bold rounded-xl transition whitespace-nowrap ${activeTab === 'descriptions' ? 'bg-rose-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
-        >
-          Descripciones y Detalles
-        </button>
-
-        <button
-          onClick={() => setActiveTab('recuerdos')}
-          className={`px-6 py-2.5 font-bold rounded-xl transition whitespace-nowrap ${activeTab === 'recuerdos' ? 'bg-rose-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
-        >
-          Momentos (QR)
-        </button>
-
-        <span className="ml-auto self-center text-sm text-gray-500 whitespace-nowrap">
-          {hayFiltros
-            ? `${filteredProducts.length} de ${products.length} productos`
-            : `${products.length} productos`}
-        </span>
-      </div>
-
-      {activeTab === 'recuerdos' && <AdminRecuerdos />}
-
-      {activeTab !== 'recuerdos' && (<>
-
-      {huerfanos.length > 0 && (
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-2xl p-5 flex flex-col gap-4">
+      {/* Sidebar desktop */}
+      <aside className="hidden md:flex flex-col w-60 bg-[#0a0e1a] border-r border-white/10 shrink-0 sticky top-0 h-screen">
+        <div className="flex items-center gap-2 px-5 py-5 border-b border-white/10">
+          <img src="/images/logo.png" alt="logo" className="w-9 h-9 object-contain bg-white rounded-lg p-0.5" />
           <div>
-            <p className="font-bold text-blue-900">
-              {huerfanos.length === 1
-                ? 'Hay 1 precio que editaste antes y dejó de aplicarse'
-                : `Hay ${huerfanos.length} precios que editaste antes y dejaron de aplicarse`}
-            </p>
-            <p className="text-sm text-blue-800 mt-1">
-              Se guardaron cuando estos productos vivían en el código. Al pasarlos a Firebase
-              cambiaron de identificador y la edición quedó suelta. Si los precios de ahora
-              son los correctos, elige <span className="font-semibold">Mantener precios</span> y
-              este aviso no vuelve a salir, salvo que cambies ese precio más adelante.
-            </p>
-            <ul className="text-sm text-blue-900 mt-3 space-y-1">
-              {huerfanos.map(({ id, datos, producto }) => (
-                <li key={id}>
-                  <span className="font-semibold">{datos.name}</span>: ahora S/{' '}
-                  {Number(producto.price).toFixed(2)} → tu precio S/ {Number(datos.price).toFixed(2)}
-                </li>
+            <p className="text-sm font-bold text-white leading-tight">Momentos365</p>
+            <p className="text-xs text-gray-500">Admin Panel</p>
+          </div>
+        </div>
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {nav.map(({ key, label, icon: Icon }) => (
+            <button key={key} onClick={() => irA(key)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
+                seccion === key ? 'bg-[#FF2B5E] text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+              <Icon size={17} />
+              {label}
+              {seccion === key && <ChevronRight size={14} className="ml-auto" />}
+            </button>
+          ))}
+        </nav>
+        <div className="px-3 pb-5 border-t border-white/10 pt-4">
+          <div className="flex items-center gap-2 px-3 mb-3">
+            <div className="w-7 h-7 rounded-full bg-[#FF2B5E] flex items-center justify-center text-xs font-bold">
+              {usuario.nombre?.[0]?.toUpperCase() || 'U'}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-white truncate">{usuario.nombre}</p>
+              <p className="text-[10px] text-gray-500 capitalize">{usuario.rol}</p>
+            </div>
+          </div>
+          <button onClick={salir} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-400/10 text-sm transition">
+            <LogOut size={15} /> Cerrar sesión
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile topbar */}
+      <div className="md:hidden fixed top-0 inset-x-0 z-50 bg-[#0a0e1a] border-b border-white/10 flex items-center justify-between px-4 h-14">
+        <div className="flex items-center gap-2">
+          <img src="/images/logo.png" alt="logo" className="w-7 h-7 object-contain bg-white rounded-md p-0.5" />
+          <span className="font-bold text-sm">Momentos365 Admin</span>
+        </div>
+        <button onClick={() => setMenuOpen(!menuOpen)} className="text-gray-400 hover:text-white">
+          {menuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </div>
+
+      {/* Mobile drawer */}
+      {menuOpen && (
+        <div className="md:hidden fixed inset-0 z-40 bg-black/60" onClick={() => setMenuOpen(false)}>
+          <div className="w-60 h-full bg-[#0a0e1a] border-r border-white/10 pt-14" onClick={e => e.stopPropagation()}>
+            <nav className="px-3 py-4 space-y-1">
+              {nav.map(({ key, label, icon: Icon }) => (
+                <button key={key} onClick={() => irA(key)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
+                    seccion === key ? 'bg-[#FF2B5E] text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                  <Icon size={17} /> {label}
+                </button>
               ))}
-            </ul>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={recuperarEdiciones}
-              disabled={recuperando || manteniendo}
-              className="px-6 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {recuperando ? <LoaderCircle size={18} className="animate-spin" /> : <RotateCcw size={18} />}
-              {recuperando ? 'Recuperando...' : 'Recuperar mis precios'}
-            </button>
-            <button
-              onClick={mantenerPrecios}
-              disabled={recuperando || manteniendo}
-              className="px-6 py-3 rounded-xl font-bold text-blue-800 bg-white border border-blue-300 hover:bg-blue-100 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {manteniendo ? <LoaderCircle size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
-              {manteniendo ? 'Guardando...' : 'Mantener precios'}
-            </button>
+            </nav>
+            <div className="px-3 border-t border-white/10 pt-4">
+              <button onClick={salir} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-400/10 text-sm transition">
+                <LogOut size={15} /> Cerrar sesión
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {repetidos.length > 0 && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
-          <div>
-            <p className="font-bold text-red-900">
-              {repetidos.length} {repetidos.length === 1 ? 'producto repetido en Firebase' : 'productos repetidos en Firebase'}
-            </p>
-            <p className="text-sm text-red-800 mt-1">
-              Hay productos cargados dos veces. Al eliminarlos se conserva una sola copia de
-              cada uno, la más completa.
-            </p>
-          </div>
-          <button
-            onClick={eliminarDuplicados}
-            disabled={limpiando || importando}
-            className="shrink-0 px-6 py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 transition shadow disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {limpiando ? <LoaderCircle size={18} className="animate-spin" /> : <TrashIcon size={18} />}
-            {limpiando ? 'Eliminando...' : 'Eliminar repetidos'}
-          </button>
-        </div>
-      )}
+      {/* Contenido */}
+      <main className="flex-1 min-w-0 md:overflow-auto">
+        <div className="md:hidden h-14" />
+        {SECCIONES[seccion] || SECCIONES.dashboard}
+      </main>
 
-      {faltantes.length > 0 && !ocultarFaltantes && (
-        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
-          <div>
-            <p className="font-bold text-amber-900">
-              {faltantes.length} {faltantes.length === 1 ? 'producto vive solo en el código' : 'productos viven solo en el código'}
-            </p>
-            <p className="text-sm text-amber-800 mt-1">
-              {faltantes.map((p) => p.name).join(', ')}
-            </p>
-            <p className="text-xs text-amber-700 mt-2">
-              Impórtalos y quedarán en Firebase junto al resto, para administrarlos desde un solo lugar.
-            </p>
-          </div>
-          <button
-            onClick={importarFaltantes}
-            disabled={importando || limpiando || !productosCargados}
-            className="shrink-0 px-6 py-3 rounded-xl font-bold text-white bg-amber-600 hover:bg-amber-700 transition shadow disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {importando ? <LoaderCircle size={18} className="animate-spin" /> : <UploadCloud size={18} />}
-            {importando ? 'Importando...' : 'Importar a Firebase'}
-          </button>
-          <button
-            onClick={() => setOcultarFaltantes(true)}
-            disabled={importando}
-            className="shrink-0 px-4 py-3 rounded-xl font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 transition border border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Cancelar
-          </button>
-        </div>
-      )}
-
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden pb-32">
-        <div className="overflow-x-visible">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              {activeTab === 'catalog' ? (
-                <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-sm">
-                  <th className="px-6 py-4 font-semibold w-[340px] min-w-[340px]">Producto</th>
-                  <th className="px-6 py-4 font-semibold">Precio</th>
-                  <th className="px-6 py-4 font-semibold text-center">Top</th>
-                  <th className="px-6 py-4 font-semibold text-center">Barato</th>
-                  <th className="px-6 py-4 font-semibold w-56">Categoría(s)</th>
-                  <th className="px-6 py-4 font-semibold w-56">Ocasión(es)</th>
-                </tr>
-              ) : (
-                <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-sm">
-                  <th className="px-6 py-4 font-semibold w-[340px] min-w-[340px]">Producto</th>
-                  <th className="px-6 py-4 font-semibold w-1/3">Descripción General</th>
-                  <th className="px-6 py-4 font-semibold">Detalles (Puntos Clave)</th>
-                </tr>
-              )}
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredProducts.map((base) => {
-                const product = verProducto(base);
-                const pendiente = !!editados[base.id];
-                return (
-                  <tr
-                    key={base.id}
-                    className={`transition ${pendiente ? 'bg-amber-50/60' : 'hover:bg-gray-50/50'}`}
-                  >
-                    <td className="px-6 py-4 align-top w-[340px] min-w-[340px]">
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-16 h-16 shrink-0"
-                          onMouseEnter={() => setHovering(base.id)}
-                          onMouseLeave={() => setHovering(null)}>
-                          <div className="w-full h-full rounded-xl bg-gray-100 overflow-hidden border border-gray-200">
-                            <img src={product.img} alt={product.name} className="w-full h-full object-cover" />
-                          </div>
-                          {eliminando === base.id ? (
-                            <div className="absolute inset-0 bg-red-600 rounded-xl flex flex-col items-center justify-center gap-0.5 z-10">
-                              <span className="text-white text-[10px] font-bold leading-tight text-center px-1">¿Eliminar?</span>
-                              <div className="flex gap-1 mt-0.5">
-                                <button
-                                  onClick={() => handleEliminar(product)}
-                                  className="bg-white text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded"
-                                >Sí</button>
-                                <button
-                                  onClick={() => setEliminando(null)}
-                                  className="bg-white text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded"
-                                >No</button>
-                              </div>
-                            </div>
-                          ) : hovering === base.id ? (
-                            <button
-                              onClick={() => setEliminando(base.id)}
-                              title="Eliminar producto"
-                              className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md z-10"
-                            >
-                              <TrashIcon size={12} />
-                            </button>
-                          ) : null}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <label className="block text-[10px] uppercase tracking-wide text-gray-400 font-bold mb-1">
-                            Nombre
-                          </label>
-                          <input
-                            type="text"
-                            value={product.name}
-                            onChange={(e) => handleChange(base.id, 'name', e.target.value)}
-                            placeholder="Nombre del producto"
-                            className="font-bold text-gray-800 text-sm bg-white border border-gray-200 rounded-lg hover:border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none w-full px-2 py-1.5 transition"
-                          />
-                        </div>
-                      </div>
-                    </td>
-
-                    {activeTab === 'catalog' ? (
-                      <>
-                        <td className="px-6 py-4 font-bold text-gray-700 align-top">
-                          <label className="block text-[10px] uppercase tracking-wide text-gray-400 font-bold mb-1">
-                            Precio
-                          </label>
-                          <div className="flex items-center gap-1">
-                            <span>S/</span>
-                            <input
-                              type="number"
-                              min="0"
-                              step="1"
-                              value={product.price}
-                              onChange={(e) => handleChange(base.id, 'price', e.target.value)}
-                              className="bg-white border border-gray-200 rounded-lg hover:border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none w-24 px-2 py-1.5 transition"
-                            />
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center align-top pt-8">
-                          <input
-                            type="checkbox"
-                            className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer w-5 h-5"
-                            checked={!!product.isTop}
-                            onChange={(e) => handleChange(base.id, 'isTop', e.target.checked)}
-                          />
-                        </td>
-                        <td className="px-6 py-4 text-center align-top pt-8">
-                          <input
-                            type="checkbox"
-                            className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer w-5 h-5"
-                            checked={!!product.isCheap}
-                            onChange={(e) => handleChange(base.id, 'isCheap', e.target.checked)}
-                          />
-                        </td>
-                        <td className="px-6 py-4 align-top pt-8">
-                          <div className="relative">
-                          <details className="group">
-                            <summary className="bg-white border border-gray-200 hover:border-rose-300 text-gray-800 text-sm rounded-lg p-2 cursor-pointer list-none min-h-[38px] flex items-center justify-between shadow-sm">
-                              <span className="truncate pr-2">
-                                {Array.isArray(product.category) && product.category.length > 0
-                                  ? product.category.join(', ')
-                                  : 'Seleccionar'}
-                              </span>
-                              <span className="text-gray-400 text-xs">▼</span>
-                            </summary>
-                            <div className="absolute z-20 w-56 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 max-h-60 overflow-y-auto">
-                              {CATEGORIES.map((c) => (
-                                <label
-                                  key={c}
-                                  className="flex items-center gap-2 text-sm cursor-pointer hover:bg-rose-50 p-1.5 rounded transition"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer"
-                                    checked={Array.isArray(product.category) && product.category.includes(c)}
-                                    onChange={(e) => {
-                                      const actual = Array.isArray(product.category) ? product.category : [];
-                                      handleChange(
-                                        base.id,
-                                        'category',
-                                        e.target.checked ? [...actual, c] : actual.filter((i) => i !== c)
-                                      );
-                                    }}
-                                  />
-                                  {c}
-                                </label>
-                              ))}
-                            </div>
-                          </details>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 align-top pt-8">
-                          <div className="relative">
-                          <details className="group">
-                            <summary className="bg-white border border-gray-200 hover:border-rose-300 text-gray-800 text-sm rounded-lg p-2 cursor-pointer list-none min-h-[38px] flex items-center justify-between shadow-sm">
-                              <span className="truncate pr-2 text-xs">
-                                {Array.isArray(product.occasion) && product.occasion.length > 0
-                                  ? product.occasion.map(o => ({
-                                      'Todos':'Todos','Cumpleaños':'Cumple','Graduación':'Grad',
-                                      'Aniversarios y Parejas':'Aniv-Par','Para Ella':'P.Ella',
-                                      'Para Él':'P.Él','Nacimientos':'Nacim',
-                                      'Flores Amarillas':'Fl.Amar','Hotwheels':'HW'
-                                    }[o] || o)).join(', ')
-                                  : 'Seleccionar'}
-                              </span>
-                              <span className="text-gray-400 text-xs">▼</span>
-                            </summary>
-                            <div className="absolute z-20 w-52 right-0 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-2 flex flex-col gap-1 max-h-72 overflow-y-auto">
-                              {['Todos (todas las ocasiones)', 'Hotwheels', ...OCCASIONS.filter(o => o !== 'Hotwheels')].map((o) => {
-                                const valor = o === 'Todos (todas las ocasiones)' ? 'Todos' : o;
-                                return (
-                                <label
-                                  key={valor}
-                                  className={`flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded transition ${valor === 'Todos' ? 'hover:bg-amber-50 border-b border-gray-100 mb-1 pb-2' : valor === 'Hotwheels' ? 'hover:bg-red-50 border-b border-gray-100 mb-1 pb-2' : 'hover:bg-rose-50'}`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    className="rounded text-rose-500 focus:ring-rose-500 cursor-pointer"
-                                    checked={Array.isArray(product.occasion) && product.occasion.includes(valor)}
-                                    onChange={(e) => {
-                                      const actual = Array.isArray(product.occasion) ? product.occasion : [];
-                                      handleChange(
-                                        base.id,
-                                        'occasion',
-                                        e.target.checked ? [...actual, valor] : actual.filter((i) => i !== valor)
-                                      );
-                                    }}
-                                  />
-                                  <span className={valor === 'Todos' ? 'text-amber-700 font-medium' : valor === 'Hotwheels' ? 'text-red-600 font-medium' : ''}>{o}</span>
-                                </label>
-                                );
-                              })}
-                            </div>
-                          </details>
-                          </div>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="px-6 py-4 align-top">
-                          <textarea
-                            value={product.description || ''}
-                            onChange={(e) => handleChange(base.id, 'description', e.target.value)}
-                            placeholder="Un detalle especial y único..."
-                            className="w-full min-h-[120px] bg-white border border-gray-200 rounded-xl p-3 text-sm text-gray-700 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition resize-y"
-                          />
-                        </td>
-                        <td className="px-6 py-4 align-top">
-                          <DetailsEditor
-                            details={product.details}
-                            onChange={(nuevos) => handleChange(base.id, 'details', nuevos)}
-                          />
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                );
-              })}
-              {filteredProducts.length === 0 && (
-                <tr>
-                  <td colSpan={activeTab === 'catalog' ? 6 : 3} className="px-6 py-12 text-center text-gray-500">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-4xl">🔍</span>
-                      <p className="font-medium">Ningún producto coincide con los filtros.</p>
-                      {hayFiltros && (
-                        <button
-                          onClick={limpiarFiltros}
-                          className="text-rose-500 font-bold mt-1"
-                        >
-                          Limpiar filtros
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      </>)}
-
-      {/* Barra fija de guardado */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.06)]">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center gap-3 sm:justify-between">
-          <div className="flex items-center gap-3 text-sm">
-            {statusMessage ? (
-              <span
-                className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold ${statusMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-              >
-                {statusMessage.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-                {statusMessage.text}
-              </span>
-            ) : hayPendientes ? (
-              <span className="text-amber-600 font-bold">
-                {pendientes.length} {pendientes.length === 1 ? 'producto sin guardar' : 'productos sin guardar'}
-              </span>
-            ) : (
-              <span className="text-gray-400">Todo guardado.</span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={descartar}
-              disabled={!hayPendientes || guardando}
-              className="px-5 py-3 rounded-xl font-bold text-gray-600 border border-gray-200 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <RotateCcw size={18} /> Descartar
-            </button>
-            <button
-              onClick={guardar}
-              disabled={!hayPendientes || guardando}
-              className="px-8 py-3 rounded-xl font-bold text-white bg-gray-900 hover:bg-rose-500 transition shadow-lg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900 flex items-center gap-2"
-            >
-              {guardando ? <LoaderCircle size={18} className="animate-spin" /> : <Save size={18} />}
-              {guardando ? 'Guardando...' : 'Guardar cambios'}
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

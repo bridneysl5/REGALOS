@@ -718,6 +718,10 @@ const App = () => {
     </footer>
   );
 
+  if (view === 'admin') {
+    return <Admin />;
+  }
+
   if (view === 'momento') {
     return <AlbumRecuerdo codigo={window.location.pathname.split('/')[2] || ''} />;
   }
@@ -755,7 +759,7 @@ const App = () => {
         </div>
       )}
 
-      {view === 'admin' ? <Admin /> : view === 'home' ? <HomeView /> : view === 'packages' ? <PackagesView /> : <ShopView />}
+      {view === 'home' ? <HomeView /> : view === 'packages' ? <PackagesView /> : <ShopView />}
 
       <Footer />
 
