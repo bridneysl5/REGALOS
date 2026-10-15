@@ -294,12 +294,12 @@ const App = () => {
             <button onClick={() => setView('home')} className="text-gray-600 hover:text-rose-500 font-medium transition">Inicio</button>
             <button onClick={() => navigateToShop('category', 'Todos')} className="text-gray-600 hover:text-rose-500 font-medium transition">Catálogo</button>
             <div className="relative group">
-              <button className="text-gray-600 hover:text-rose-500 font-medium transition flex items-center">
+              <button onClick={() => setView('packages')} className="text-gray-600 hover:text-rose-500 font-medium transition flex items-center">
                 Paquetes <ChevronRight size={16} className="rotate-90 ml-1" />
               </button>
               <div className="absolute top-full left-0 bg-white shadow-xl border border-gray-100 rounded-xl py-2 w-48 hidden group-hover:block animate-in fade-in slide-in-from-top-2">
-                <button onClick={() => navigateToShop('category', 'Corporativos')} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-rose-50 hover:text-rose-500">Corporativos</button>
-                <button onClick={() => navigateToShop('category', 'Graduaciones')} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-rose-50 hover:text-rose-500">Graduaciones</button>
+                <button onClick={() => { setView('packages'); }} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-rose-50 hover:text-rose-500">Corporativos</button>
+                <button onClick={() => { setView('packages'); }} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-rose-50 hover:text-rose-500">Graduaciones</button>
               </div>
             </div>
             <div className="relative group">
@@ -567,6 +567,92 @@ const App = () => {
     </div>
   );
 
+
+  const PackagesView = () => {
+    const [pkgFilter, setPkgFilter] = useState('Todos');
+
+    const pkgProducts = useMemo(() => {
+      if (pkgFilter === 'Todos') return combinedProducts;
+      return combinedProducts.filter(p => {
+        const cats = Array.isArray(p.category) ? p.category : [p.category];
+        const occs = Array.isArray(p.occasion) ? p.occasion : [p.occasion];
+        return cats.includes(pkgFilter) || occs.includes(pkgFilter);
+      });
+    }, [pkgFilter, combinedProducts]);
+
+    const filterBtns = ['Todos', 'Corporativos', 'Graduaciones'];
+
+    return (
+      <div className="animate-in fade-in duration-500 py-8 max-w-7xl mx-auto px-4">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold font-serif text-gray-900 mb-2">Paquetes</h1>
+          <p className="text-gray-500">Soluciones especiales para cada evento</p>
+        </div>
+
+        {/* Filter Pills */}
+        <div className="flex gap-3 mb-8 justify-center flex-wrap">
+          {filterBtns.map(f => (
+            <button
+              key={f}
+              onClick={() => setPkgFilter(f)}
+              className={"px-6 py-2 rounded-full font-medium transition text-sm " + (
+                pkgFilter === f
+                  ? "bg-[#FF2B5E] text-white shadow-md"
+                  : "bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-[#FF2B5E]"
+              )}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        {/* Category Banner Cards */}
+        {pkgFilter === 'Todos' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <div
+              onClick={() => setPkgFilter('Corporativos')}
+              className="relative rounded-2xl overflow-hidden cursor-pointer group h-40 bg-gradient-to-br from-[#0E1322] to-[#1e2a4a] flex items-center justify-center shadow-lg hover:scale-[1.02] transition"
+            >
+              <div className="text-center text-white">
+                <div className="text-4xl mb-2">🏢</div>
+                <h2 className="text-xl font-bold">Corporativos</h2>
+                <p className="text-sm text-gray-300 mt-1">Regalos para empresas y equipos</p>
+              </div>
+            </div>
+            <div
+              onClick={() => setPkgFilter('Graduaciones')}
+              className="relative rounded-2xl overflow-hidden cursor-pointer group h-40 bg-gradient-to-br from-[#FF2B5E] to-[#c0184a] flex items-center justify-center shadow-lg hover:scale-[1.02] transition"
+            >
+              <div className="text-center text-white">
+                <div className="text-4xl mb-2">🎓</div>
+                <h2 className="text-xl font-bold">Graduaciones</h2>
+                <p className="text-sm text-gray-300 mt-1">Celebra el logro de tus seres queridos</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Products Grid */}
+        {pkgProducts.length > 0 ? (
+          <ProductGrid
+            filteredProducts={pkgProducts}
+            activeFilter={{ category: 'Todos', occasion: 'Todos', search: '' }}
+            setActiveFilter={() => {}}
+            addToCart={addToCart}
+            setSelectedProduct={setSelectedProduct}
+          />
+        ) : (
+          <div className="text-center py-20 text-gray-400">
+            <div className="text-5xl mb-4">📦</div>
+            <p className="text-lg font-medium">Próximamente paquetes de {pkgFilter}</p>
+            <p className="text-sm mt-2">Estamos preparando algo especial para ti</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const Footer = () => (
     <footer className="bg-gray-900 text-gray-400 py-16 border-t border-gray-800">
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
@@ -641,8 +727,8 @@ const App = () => {
           <button onClick={() => { setView('shop'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Catálogo</button>
           <div className="pt-2 border-t border-gray-50">
             <p className="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">Paquetes</p>
-            <button onClick={() => { navigateToShop('category', 'Corporativos'); setIsMenuOpen(false); }} className="block w-full text-left py-2 text-gray-600">Corporativos</button>
-            <button onClick={() => { navigateToShop('category', 'Graduaciones'); setIsMenuOpen(false); }} className="block w-full text-left py-2 text-gray-600">Graduaciones</button>
+            <button onClick={() => { setView('packages'); setIsMenuOpen(false); }} className="block w-full text-left py-2 text-gray-600">Corporativos</button>
+            <button onClick={() => { setView('packages'); setIsMenuOpen(false); }} className="block w-full text-left py-2 text-gray-600">Graduaciones</button>
           </div>
           <div className="pt-2 border-t border-gray-50">
             <p className="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">Categorías</p>
@@ -653,7 +739,7 @@ const App = () => {
         </div>
       )}
 
-      {view === 'admin' ? <Admin /> : view === 'home' ? <HomeView /> : <ShopView />}
+      {view === 'admin' ? <Admin /> : view === 'home' ? <HomeView /> : view === 'packages' ? <PackagesView /> : <ShopView />}
 
       <Footer />
 
