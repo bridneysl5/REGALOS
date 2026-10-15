@@ -49,7 +49,7 @@ async function subirImagenWebp(file, nombre) {
 /* ── Calculadora de costos ───────────────────────────────────────────────── */
 function Calculadora({ insumos, onGuardar, inicial }) {
   const [items, setItems] = useState(inicial || []);
-  const [manoObra, setManoObra] = useState(inicial?.manoObra || 0);
+
   const [precioVenta, setPrecioVenta] = useState(inicial?.precioVenta || 0);
   const [busqueda, setBusqueda] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -65,7 +65,9 @@ function Calculadora({ insumos, onGuardar, inicial }) {
   const setCantidad = (id, val) => setItems(prev => prev.map(i => i.id === id ? { ...i, cantidad: parseFloat(val) || 0 } : i));
 
   const costoInsumos = items.reduce((s, i) => s + (i.costoUnitario * i.cantidad), 0);
-  const costoTotal = costoInsumos + parseFloat(manoObra || 0);
+  const gananciaAntes = parseFloat(precioVenta || 0) - costoInsumos;
+  const manoObra = Math.max(0, gananciaAntes) * 0.70;
+  const costoTotal = costoInsumos + manoObra;
   const ganancia = parseFloat(precioVenta || 0) - costoTotal;
   const margen = precioVenta > 0 ? ((ganancia / parseFloat(precioVenta)) * 100).toFixed(1) : 0;
 
@@ -119,11 +121,7 @@ function Calculadora({ insumos, onGuardar, inicial }) {
           </tbody>
         </table>
       )}
-      <div className="flex items-center gap-3">
-        <label className="text-gray-400 text-sm w-32">Mano de obra (S/)</label>
-        <input type="number" min="0" step="0.5" value={manoObra} onChange={e => setManoObra(e.target.value)}
-          className="w-24 bg-gray-700 rounded px-2 py-1 text-white text-sm text-right"/>
-      </div>
+
       <div className="flex items-center gap-3">
         <label className="text-gray-400 text-sm w-32">Precio de venta (S/)</label>
         <input type="number" min="0" step="0.5" value={precioVenta} onChange={e => setPrecioVenta(e.target.value)}
@@ -131,13 +129,13 @@ function Calculadora({ insumos, onGuardar, inicial }) {
       </div>
       <div className="bg-gray-900 rounded-lg p-3 space-y-1 text-sm">
         <div className="flex justify-between text-gray-300"><span>Costo insumos</span><span>S/{costoInsumos.toFixed(2)}</span></div>
-        <div className="flex justify-between text-gray-300"><span>Mano de obra</span><span>S/{parseFloat(manoObra||0).toFixed(2)}</span></div>
+        <div className="flex justify-between text-gray-300"><span>Mano de obra <span className="text-xs text-blue-400">(70%)</span></span><span>S/{manoObra.toFixed(2)}</span></div>
         <div className="flex justify-between text-white font-semibold border-t border-gray-700 pt-1 mt-1"><span>Costo total</span><span>S/{costoTotal.toFixed(2)}</span></div>
         <div className={`flex justify-between font-semibold ${ganancia >= 0 ? 'text-green-400' : 'text-red-400'}`}>
           <span>Ganancia</span><span>S/{ganancia.toFixed(2)} ({margen}%)</span>
         </div>
       </div>
-      <button onClick={() => onGuardar({ items, manoObra: parseFloat(manoObra||0), precioVenta: parseFloat(precioVenta||0), costoTotal, ganancia })}
+      <button onClick={() => onGuardar({ items, manoObra, precioVenta: parseFloat(precioVenta||0), costoTotal, ganancia })}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-sm font-medium flex items-center justify-center gap-2">
         <Save size={14}/> Guardar en producto
       </button>

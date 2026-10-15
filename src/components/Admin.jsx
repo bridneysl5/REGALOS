@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  LayoutDashboard, Package, Warehouse, ShoppingBag,
+  LayoutDashboard, Package, Warehouse, ShoppingBag, History,
   Users, Camera, LogOut, Menu, X, ChevronRight,
 } from 'lucide-react';
 import { loginUsuario } from '../adminFirebase';
@@ -8,6 +8,7 @@ import AdminDashboard from './admin/AdminDashboard';
 import AdminProductos from './admin/AdminProductos';
 import AdminInventario from './admin/AdminInventario';
 import AdminVentas from './admin/AdminVentas';
+import AdminHistorialVentas from './admin/AdminHistorialVentas';
 import AdminUsuarios from './admin/AdminUsuarios';
 import AdminRecuerdos from './AdminRecuerdos';
 
@@ -79,6 +80,7 @@ const NAV = [
   { key: 'productos',  label: 'Productos',   icon: Package,         roles: ['owner','admin'] },
   { key: 'inventario', label: 'Inventario',  icon: Warehouse,       roles: ['owner','admin','inventario'] },
   { key: 'ventas',     label: 'Ventas',      icon: ShoppingBag,     roles: ['owner','admin','ventas','inventario'] },
+  { key: 'historial',  label: 'Historial',   icon: History,         roles: ['owner','admin','ventas','inventario'] },
   { key: 'usuarios',   label: 'Usuarios',    icon: Users,           roles: ['owner','admin'] },
   { key: 'recuerdos',  label: 'Momentos QR', icon: Camera,          roles: ['owner','admin'] },
 ];
@@ -100,6 +102,7 @@ const Admin = () => {
     productos:  <AdminProductos />,
     inventario: <AdminInventario />,
     ventas:     <AdminVentas usuario={usuario} />,
+    historial:  <AdminHistorialVentas />,
     usuarios:   <AdminUsuarios sesion={usuario} />,
     recuerdos:  <AdminRecuerdos />,
   };
