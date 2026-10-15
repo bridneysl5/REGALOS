@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
-  Search, CheckCircle2, Clock, Package, Phone, User, FileText, Heart,
-  Truck, Trash2, Edit2, Eye, X, Save, ChevronDown,
-  DollarSign, MapPin, Send,
+  Search, CheckCircle2, Package, Phone, User, FileText, Heart,
+  Truck, Trash2, Edit2, Eye, X, Save,
+  DollarSign, MapPin,
 } from 'lucide-react';
 import { subscribeVentas, actualizarVenta, eliminarVenta } from '../../adminFirebase';
 
@@ -193,7 +193,6 @@ function ModalEditar({ venta, onCerrar, onGuardado }) {
 function FilaVenta({ venta, onVerDetalle, onEditar, onEliminar }) {
   const [marcandoPago, setMarcandoPago] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [cambiandoEstado, setCambiandoEstado] = useState(false);
 
   const total = Number(venta.total || 0);
   const adelanto = Number(venta.adelanto || 0);
@@ -213,7 +212,6 @@ function FilaVenta({ venta, onVerDetalle, onEditar, onEliminar }) {
 
   const cambiarEstado = async (nuevoEstado) => {
     await actualizarVenta(venta.id, { estado: nuevoEstado });
-    setCambiandoEstado(false);
   };
 
   // Productos en texto breve
@@ -227,7 +225,8 @@ function FilaVenta({ venta, onVerDetalle, onEditar, onEliminar }) {
       <td className="px-4 py-3 whitespace-nowrap">
         <p className="text-yellow-400 font-mono font-bold text-sm">{venta.idPedido || venta.id?.slice(-8)?.toUpperCase() || '—'}</p>
         <p className="text-gray-500 text-xs mt-0.5">{formatFecha(venta.fecha)}</p>
-        {venta.cliente && <p className="text-gray-400 text-xs mt-0.5 truncate max-w-[120px]">{venta.cliente}</p>}
+        {venta.cliente && <p className="text-gray-300 text-xs mt-0.5 truncate max-w-[130px]">👤 {venta.cliente}</p>}
+        {venta.telefono && <p className="text-blue-400 text-xs mt-0.5">📞 {venta.telefono}</p>}
       </td>
 
       {/* Productos */}
@@ -250,22 +249,15 @@ function FilaVenta({ venta, onVerDetalle, onEditar, onEliminar }) {
       </td>
 
       {/* Estado */}
-      <td className="px-4 py-3 whitespace-nowrap relative">
-        <button onClick={() => setCambiandoEstado(!cambiandoEstado)}
-          className={`px-2.5 py-1 rounded-lg text-xs border font-medium flex items-center gap-1 ${estadoStyle[venta.estado] || estadoStyle.pendiente}`}>
-          {venta.estado || 'pendiente'} <ChevronDown size={10}/>
-        </button>
-        {cambiandoEstado && (
-          <div className="absolute z-20 top-10 left-4 bg-gray-800 border border-gray-700 rounded-xl shadow-xl min-w-[140px] overflow-hidden">
-            {ESTADOS.map(s => (
-              <button key={s} onClick={() => cambiarEstado(s)}
-                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-700 ${venta.estado === s ? 'text-white font-semibold' : 'text-gray-300'}`}>
-                {s}
-              </button>
-            ))}
-            <button onClick={() => setCambiandoEstado(false)} className="w-full text-left px-3 py-2 text-xs text-gray-500 hover:bg-gray-700 border-t border-gray-700">Cancelar</button>
-          </div>
-        )}
+      <td className="px-4 py-3 whitespace-nowrap">
+        <select
+          value={venta.estado || 'pendiente'}
+          onChange={e => cambiarEstado(e.target.value)}
+          className={`px-2.5 py-1.5 rounded-lg text-xs border font-medium cursor-pointer outline-none ${estadoStyle[venta.estado] || estadoStyle.pendiente} bg-transparent`}>
+          {ESTADOS.map(s => (
+            <option key={s} value={s} className="bg-gray-800 text-white">{s}</option>
+          ))}
+        </select>
       </td>
 
       {/* Entregado */}

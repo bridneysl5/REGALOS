@@ -40,10 +40,10 @@ export const eliminarInsumo = (id) => deleteDoc(doc(db, 'inventario', id));
 
 // ─── VENTAS ────────────────────────────────────────────────────────────────
 export const subscribeVentas = (cb) => {
-  const q = query(collection(db, 'ventas'), orderBy('fecha', 'desc'));
+  const q = query(collection(db, 'ventas'), orderBy('creadoEn', 'desc'));
   return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
 };
 export const registrarVenta = (datos) =>
-  addDoc(collection(db, 'ventas'), { cliente: '', telefono: '', items: [], total: 0, estado: 'pendiente', notas: '', ...datos, fecha: serverTimestamp() });
+  addDoc(collection(db, 'ventas'), { cliente: '', telefono: '', items: [], total: 0, estado: 'pendiente', notas: '', ...datos, creadoEn: new Date(), fecha: serverTimestamp() });
 export const actualizarVenta = (id, datos) => updateDoc(doc(db, 'ventas', id), datos);
 export const eliminarVenta = (id) => deleteDoc(doc(db, 'ventas', id));
