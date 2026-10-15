@@ -141,3 +141,37 @@ export const mergeCatalogo = (base = [], enFirebase = []) => {
   const soloCodigo = productosFaltantes(base, unicos).map((p) => ({ ...p, fuente: 'codigo' }));
   return [...soloCodigo, ...unicos];
 };
+
+// ─── CRUD directo desde el panel admin ─────────────────────────────────────
+
+export const crearProductoRegalo = (datos) =>
+  addDoc(collection(db, PRODUCTOS_COLLECTION), {
+    nombre: datos.nombre || '',
+    descripcion: datos.descripcion || '',
+    precioVenta: Number(datos.precio) || 0,
+    moneda: datos.moneda || 'S/',
+    categoria: datos.categoria ? [datos.categoria] : [],
+    ocasion: datos.ocasiones || [],
+    imageUrl: datos.imagen || '',
+    paquete: !!datos.paquete,
+    top: !!datos.destacado,
+    emprendimiento: EMPRENDIMIENTO,
+    costo: datos.costo || null,
+  });
+
+export const actualizarProductoRegalo = (id, datos) =>
+  updateDoc(doc(db, PRODUCTOS_COLLECTION, String(id)), {
+    nombre: datos.nombre,
+    descripcion: datos.descripcion || '',
+    precioVenta: Number(datos.precio) || 0,
+    moneda: datos.moneda || 'S/',
+    categoria: datos.categoria ? [datos.categoria] : [],
+    ocasion: datos.ocasiones || [],
+    imageUrl: datos.imagen || '',
+    paquete: !!datos.paquete,
+    top: !!datos.destacado,
+    ...(datos.costo !== undefined && { costo: datos.costo }),
+  });
+
+export const eliminarProductoRegalo = (id) =>
+  deleteDoc(doc(db, PRODUCTOS_COLLECTION, String(id)));
