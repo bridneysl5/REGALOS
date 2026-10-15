@@ -175,3 +175,29 @@ export const actualizarProductoRegalo = (id, datos) =>
 
 export const eliminarProductoRegalo = (id) =>
   deleteDoc(doc(db, PRODUCTOS_COLLECTION, String(id)));
+
+/** Escucha productos en formato raw Firebase para el panel admin */
+export const subscribeProductosAdmin = (onChange) =>
+  onSnapshot(
+    query(collection(db, PRODUCTOS_COLLECTION), where('emprendimiento', '==', EMPRENDIMIENTO)),
+    (snapshot) => {
+      const docs = [];
+      snapshot.forEach((d) => {
+        const data = d.data();
+        docs.push({
+          id: d.id,
+          nombre: data.nombre || '',
+          descripcion: data.descripcion || '',
+          precio: data.precioVenta || 0,
+          moneda: data.moneda || 'S/',
+          categoria: Array.isArray(data.categoria) ? data.categoria[0] || '' : data.categoria || '',
+          ocasiones: data.ocasion || [],
+          imagen: data.imageUrl || '',
+          paquete: !!data.paquete,
+          destacado: !!data.top,
+          costo: data.costo || null,
+        });
+      });
+      onChange(docs);
+    }
+  );

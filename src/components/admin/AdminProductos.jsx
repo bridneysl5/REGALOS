@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Save, Calculator, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { subscribeInventario } from '../../adminFirebase';
 import {
-  subscribeProductosRegalos,
+  subscribeProductosAdmin,
   crearProductoRegalo,
   actualizarProductoRegalo,
   eliminarProductoRegalo,
-} from '../../productosFirebase';
+} from "../../productosFirebase";
 
 const OCASIONES = ['Cumpleaños','San Valentín','Aniversario','Día de la Madre','Día del Padre','Navidad','Graduaciones','Corporativos','Baby Shower','Boda'];
 const CATEGORIAS = ['Desayunos','Bouquet','Cajas','Canastas','Paquetes Corporativos','Otros'];
@@ -330,7 +330,7 @@ export default function AdminProductos() {
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
-    const u1 = subscribeProductosRegalos(setProductos);
+    const u1 = subscribeProductosAdmin(setProductos);
     const u2 = subscribeInventario(setInsumos);
     return () => { u1(); u2(); };
   }, []);
