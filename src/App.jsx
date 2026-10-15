@@ -295,6 +295,15 @@ const App = () => {
             <button onClick={() => navigateToShop('category', 'Todos')} className="text-gray-600 hover:text-rose-500 font-medium transition">Catálogo</button>
             <div className="relative group">
               <button className="text-gray-600 hover:text-rose-500 font-medium transition flex items-center">
+                Paquetes <ChevronRight size={16} className="rotate-90 ml-1" />
+              </button>
+              <div className="absolute top-full left-0 bg-white shadow-xl border border-gray-100 rounded-xl py-2 w-48 hidden group-hover:block animate-in fade-in slide-in-from-top-2">
+                <button onClick={() => navigateToShop('category', 'Corporativos')} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-rose-50 hover:text-rose-500">Corporativos</button>
+                <button onClick={() => navigateToShop('category', 'Graduaciones')} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-rose-50 hover:text-rose-500">Graduaciones</button>
+              </div>
+            </div>
+            <div className="relative group">
+              <button className="text-gray-600 hover:text-rose-500 font-medium transition flex items-center">
                 Ocasiones <ChevronRight size={16} className="rotate-90 ml-1" />
               </button>
               <div className="absolute top-full left-0 bg-white shadow-xl border border-gray-100 rounded-xl py-2 w-48 hidden group-hover:block animate-in fade-in slide-in-from-top-2">
@@ -630,6 +639,11 @@ const App = () => {
         <div className="md:hidden bg-white border-b border-gray-100 p-4 space-y-4 animate-in slide-in-from-top duration-300">
           <button onClick={() => { setView('home'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Inicio</button>
           <button onClick={() => { setView('shop'); setIsMenuOpen(false); }} className="block w-full text-left font-medium py-2">Catálogo</button>
+          <div className="pt-2 border-t border-gray-50">
+            <p className="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">Paquetes</p>
+            <button onClick={() => { navigateToShop('category', 'Corporativos'); setIsMenuOpen(false); }} className="block w-full text-left py-2 text-gray-600">Corporativos</button>
+            <button onClick={() => { navigateToShop('category', 'Graduaciones'); setIsMenuOpen(false); }} className="block w-full text-left py-2 text-gray-600">Graduaciones</button>
+          </div>
           <div className="pt-2 border-t border-gray-50">
             <p className="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">Categorías</p>
             {categories.slice(1).map(c => (
