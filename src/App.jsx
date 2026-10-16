@@ -186,6 +186,10 @@ const App = () => {
 
   const filteredProducts = useMemo(() => {
     let result = combinedProducts.filter(p => {
+      // Hot Wheels solo aparece en filtro "Todos" o "Hotwheels"
+      const isHW = (Array.isArray(p.category) ? p.category.some(c => /hotw/i.test(c)) : /hotw/i.test(p.category || '')) ||
+                   (Array.isArray(p.occasion) ? p.occasion.some(o => /hotwheels/i.test(o)) : /hotwheels/i.test(p.occasion || ''));
+      if (isHW && activeFilter.occasion !== 'Todos' && !/hotwheels/i.test(activeFilter.occasion)) return false;
       const matchCat = activeFilter.category === 'Todos' ||
         (Array.isArray(p.category) ? p.category.includes(activeFilter.category) : p.category === activeFilter.category);
       const matchOcc = activeFilter.occasion === 'Todos' ||
