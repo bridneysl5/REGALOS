@@ -619,55 +619,126 @@ export default function AlbumRecuerdo({ codigo }) {
                   </g>
                 </svg>
               ) : esGrad ? (
-                <svg ref={svgRef} viewBox="-160 -300 320 400" aria-hidden="true">
-                  {/* Fondo diplomas decorativos */}
-                  <ellipse cx="-90" cy="90" rx="28" ry="36" fill="rgba(201,162,39,0.08)" transform="rotate(-18,-90,90)"/>
-                  <ellipse cx="90" cy="80" rx="22" ry="30" fill="rgba(27,140,168,0.08)" transform="rotate(14,90,80)"/>
-                  {/* Estrado / base */}
-                  <rect x="-110" y="85" width="220" height="14" rx="4" fill="#0D1B33"/>
-                  <rect x="-110" y="85" width="220" height="4" rx="2" fill="#1B4A6B"/>
-                  <rect x="-90" y="93" width="180" height="6" fill="#0A1628"/>
-                  {/* Birrete animado */}
-                  <g ref={gradCapRef}>
-                    {/* Sombra bajo el birrete */}
-                    <ellipse cx="0" cy="88" rx="42" ry="7" fill="rgba(0,0,0,0.35)"/>
-                    {/* Tallo/base del birrete */}
-                    <rect x="-10" y="30" width="20" height="58" rx="4" fill="#1A1A2E"/>
-                    <rect x="-12" y="52" width="24" height="36" rx="3" fill="#16213E"/>
-                    {/* Tabla del birrete */}
-                    <rect x="-54" y="16" width="108" height="20" rx="5" fill="#0F3460"/>
-                    <rect x="-54" y="16" width="108" height="6" rx="3" fill="#1B5E8C"/>
-                    <rect x="-50" y="20" width="100" height="12" rx="3" fill="#0F3460"/>
-                    {/* Borde dorado del birrete */}
-                    <rect x="-54" y="14" width="108" height="4" rx="2" fill="#C9A227"/>
-                    <rect x="-54" y="32" width="108" height="3" rx="1" fill="#C9A227" opacity="0.6"/>
-                    {/* Boton superior */}
-                    <circle cx="0" cy="16" r="6" fill="#C9A227"/>
-                    <circle cx="0" cy="16" r="3" fill="#E8C96A"/>
-                    {/* Borla / tassel */}
-                    <line x1="0" y1="16" x2="44" y2="-10" stroke="#C9A227" strokeWidth="2.5" strokeLinecap="round"/>
-                    <circle cx="44" cy="-14" r="5" fill="#C9A227"/>
-                    <line x1="44" y1="-9" x2="36" y2="12" stroke="#E8C96A" strokeWidth="1.8" strokeLinecap="round"/>
-                    <line x1="44" y1="-9" x2="44" y2="14" stroke="#C9A227" strokeWidth="1.8" strokeLinecap="round"/>
-                    <line x1="44" y1="-9" x2="52" y2="12" stroke="#E8C96A" strokeWidth="1.8" strokeLinecap="round"/>
-                    {/* Fleco de la borla */}
-                    {[34,38,42,46,50,54].map((x,i) => (
-                      <line key={i} x1={x} y1="14" x2={x-2+i} y2="28" stroke="#C9A227" strokeWidth="1.2" strokeLinecap="round" opacity="0.8"/>
-                    ))}
+                <svg ref={svgRef} viewBox="-160 -340 320 460" aria-hidden="true">
+                  {/* ── FOCOS DE ESCENARIO ── */}
+                  <path d="M-140,-340 L-70,110 L-160,110 Z" fill="rgba(201,162,39,0.05)"/>
+                  <path d="M140,-340 L70,110 L160,110 Z"  fill="rgba(27,140,168,0.05)"/>
+                  <path d="M0,-340 L-40,110 L40,110 Z"    fill="rgba(201,162,39,0.04)"/>
+
+                  {/* ── DIPLOMA IZQUIERDO ── */}
+                  <g transform="translate(-105,-20) rotate(-14)">
+                    <rect x="0" y="0" width="88" height="58" rx="3" fill="#0C1E38" stroke="#C9A227" strokeWidth="1.8"/>
+                    <ellipse cx="0"  cy="29" rx="9" ry="29" fill="#122540"/>
+                    <ellipse cx="88" cy="29" rx="9" ry="29" fill="#122540"/>
+                    <rect x="18" y="12" width="52" height="3"   rx="1" fill="#C9A227" opacity="0.9"/>
+                    <rect x="12" y="20" width="64" height="2"   rx="1" fill="#EEF3FF" opacity="0.28"/>
+                    <rect x="12" y="26" width="64" height="2"   rx="1" fill="#EEF3FF" opacity="0.22"/>
+                    <rect x="12" y="32" width="52" height="2"   rx="1" fill="#EEF3FF" opacity="0.18"/>
+                    <circle cx="44" cy="44" r="9" fill="none" stroke="#C9A227" strokeWidth="1.6"/>
+                    <text x="44" y="48" fontSize="9" fill="#C9A227" textAnchor="middle" opacity="0.85">★</text>
+                    {/* lazos */}
+                    <path d="M18,0 Q14,-6 18,-12 Q22,-6 18,0 Z" fill="#C9A227" opacity="0.7"/>
+                    <path d="M70,0 Q74,-6 70,-12 Q66,-6 70,0 Z" fill="#C9A227" opacity="0.7"/>
+                    <rect x="12" y="-4" width="64" height="5" rx="2" fill="#C9A227" opacity="0.55"/>
                   </g>
-                  {/* Estrellas decorativas estáticas */}
-                  <text x="-120" y="-40" fontSize="14" fill="#C9A227" opacity="0.6">✦</text>
-                  <text x="100" y="-60" fontSize="10" fill="#1B8CA8" opacity="0.5">✦</text>
-                  <text x="-100" y="-120" fontSize="8" fill="#C9A227" opacity="0.4">★</text>
-                  <text x="80" y="-140" fontSize="12" fill="#C9A227" opacity="0.5">★</text>
-                  {/* Diploma decorativo */}
-                  <rect x="-46" y="-200" width="92" height="66" rx="4" fill="#0A1628" stroke="#C9A227" strokeWidth="1.5" opacity="0.7"/>
-                  <rect x="-38" y="-192" width="76" height="4" rx="1" fill="#C9A227" opacity="0.5"/>
-                  <rect x="-38" y="-184" width="60" height="2.5" rx="1" fill="#EEF3FF" opacity="0.3"/>
-                  <rect x="-38" y="-178" width="70" height="2.5" rx="1" fill="#EEF3FF" opacity="0.2"/>
-                  <rect x="-38" y="-172" width="50" height="2.5" rx="1" fill="#EEF3FF" opacity="0.2"/>
-                  <circle cx="0" cy="-152" r="10" fill="none" stroke="#C9A227" strokeWidth="1.5" opacity="0.6"/>
-                  <text x="0" y="-148" fontSize="10" fill="#C9A227" textAnchor="middle" opacity="0.7">★</text>
+
+                  {/* ── DIPLOMA DERECHO ── */}
+                  <g transform="translate(40,-10) rotate(11)">
+                    <rect x="0" y="0" width="76" height="50" rx="3" fill="#0C1E38" stroke="#C9A227" strokeWidth="1.5"/>
+                    <ellipse cx="0"  cy="25" rx="8" ry="25" fill="#122540"/>
+                    <ellipse cx="76" cy="25" rx="8" ry="25" fill="#122540"/>
+                    <rect x="14" y="10" width="48" height="2.5" rx="1" fill="#C9A227" opacity="0.85"/>
+                    <rect x="10" y="17" width="56" height="1.8" rx="1" fill="#EEF3FF" opacity="0.22"/>
+                    <rect x="10" y="23" width="56" height="1.8" rx="1" fill="#EEF3FF" opacity="0.18"/>
+                    <circle cx="38" cy="38" r="8" fill="none" stroke="#C9A227" strokeWidth="1.4"/>
+                    <text x="38" y="42" fontSize="8" fill="#C9A227" textAnchor="middle" opacity="0.8">★</text>
+                    <path d="M16,0 Q12,-5 16,-10 Q20,-5 16,0 Z" fill="#C9A227" opacity="0.65"/>
+                    <path d="M60,0 Q64,-5 60,-10 Q56,-5 60,0 Z" fill="#C9A227" opacity="0.65"/>
+                    <rect x="10" y="-3" width="56" height="4" rx="2" fill="#C9A227" opacity="0.5"/>
+                  </g>
+
+                  {/* ── ESTRELLAS ESTÁTICAS ── */}
+                  <text x="-148" y="-160" fontSize="13" fill="#C9A227" opacity="0.5">✦</text>
+                  <text x="126"  y="-200" fontSize="10" fill="#E8C96A" opacity="0.45">✦</text>
+                  <text x="-120" y="-260" fontSize="8"  fill="#EEF3FF" opacity="0.3">★</text>
+                  <text x="108"  y="-280" fontSize="11" fill="#C9A227" opacity="0.4">★</text>
+                  <text x="-50"  y="-310" fontSize="7"  fill="#1B8CA8" opacity="0.4">✦</text>
+                  <text x="36"   y="-295" fontSize="9"  fill="#C9A227" opacity="0.35">✦</text>
+
+                  {/* ── ESTRADO / ESCENARIO ── */}
+                  <rect x="-140" y="96"  width="280" height="16" rx="4" fill="#0D1F3C"/>
+                  <rect x="-140" y="96"  width="280" height="5"  rx="2" fill="#1B4A6B" opacity="0.7"/>
+                  <rect x="-120" y="106" width="240" height="6"       fill="#0A1628"/>
+                  {/* líneas del piso */}
+                  {[-100,-60,-20,20,60,100].map((x,i) => (
+                    <line key={i} x1={x} y1="101" x2={x} y2="112" stroke="#1B4A6B" strokeWidth="0.8" opacity="0.4"/>
+                  ))}
+
+                  {/* ── BIRRETE PRINCIPAL (animado) ── */}
+                  <g ref={gradCapRef}>
+                    {/* sombra en el suelo */}
+                    <ellipse cx="0" cy="98" rx="56" ry="9" fill="rgba(0,0,0,0.38)"/>
+
+                    {/* CILINDRO — cara lateral oscura */}
+                    <ellipse cx="0" cy="76" rx="28" ry="11" fill="#08162A"/>
+                    <rect x="-28" y="30" width="56" height="46" fill="#0D1F3C"/>
+                    {/* CILINDRO — cara frontal */}
+                    <ellipse cx="0" cy="30" rx="28" ry="11" fill="#162E52"/>
+                    {/* anillos dorados */}
+                    <ellipse cx="0" cy="30" rx="28" ry="11" fill="none" stroke="#C9A227" strokeWidth="3"/>
+                    <ellipse cx="0" cy="76" rx="28" ry="11" fill="none" stroke="#C9A227" strokeWidth="2.2"/>
+                    {/* costillas verticales del cilindro */}
+                    <line x1="-28" y1="30" x2="-28" y2="76" stroke="#C9A227" strokeWidth="1.8" opacity="0.45"/>
+                    <line x1="28"  y1="30" x2="28"  y2="76" stroke="#C9A227" strokeWidth="1.8" opacity="0.45"/>
+                    {/* brillo interno del cilindro */}
+                    <ellipse cx="0" cy="30" rx="18" ry="6" fill="rgba(238,243,255,0.07)"/>
+
+                    {/* TABLA — cara inferior (profundidad) */}
+                    <polygon points="-92,24  92,24  86,36 -86,36" fill="#08162A"/>
+                    {/* TABLA — cara superior */}
+                    <rect x="-90" y="-14" width="180" height="38" rx="4" fill="#0F2A4A"/>
+                    {/* brillo superior */}
+                    <rect x="-90" y="-14" width="180" height="10" rx="4" fill="#162E52"/>
+                    {/* borde dorado grueso */}
+                    <rect x="-90" y="-14" width="180" height="38" rx="4" fill="none" stroke="#C9A227" strokeWidth="4"/>
+                    {/* borde interior fino */}
+                    <rect x="-82" y="-6"  width="164" height="22" rx="2" fill="none" stroke="#C9A227" strokeWidth="1" opacity="0.35"/>
+                    {/* esquinas decorativas doradas */}
+                    <circle cx="-90" cy="-14" r="5.5" fill="#C9A227"/>
+                    <circle cx="90"  cy="-14" r="5.5" fill="#C9A227"/>
+                    <circle cx="-90" cy="24"  r="5.5" fill="#C9A227"/>
+                    <circle cx="90"  cy="24"  r="5.5" fill="#C9A227"/>
+                    <circle cx="-90" cy="-14" r="2.5" fill="#E8C96A"/>
+                    <circle cx="90"  cy="-14" r="2.5" fill="#E8C96A"/>
+                    <circle cx="-90" cy="24"  r="2.5" fill="#E8C96A"/>
+                    <circle cx="90"  cy="24"  r="2.5" fill="#E8C96A"/>
+
+                    {/* BOTÓN CENTRAL */}
+                    <circle cx="0" cy="5" r="11" fill="#C9A227"/>
+                    <circle cx="0" cy="5" r="7.5" fill="#E8C96A"/>
+                    <circle cx="0" cy="5" r="4"   fill="#C9A227"/>
+                    <circle cx="-2" cy="3" r="2"  fill="#F5DFA0"/>
+
+                    {/* BORLA — cordón principal */}
+                    <path d="M0,5 Q22,-2 44,-20" stroke="#C9A227" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+                    <path d="M0,5 Q22,-2 44,-20" stroke="#E8C96A" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.6"/>
+                    {/* nudo */}
+                    <circle cx="44" cy="-20" r="10" fill="#C9A227"/>
+                    <circle cx="44" cy="-20" r="6.5" fill="#E8C96A"/>
+                    <circle cx="44" cy="-20" r="3"   fill="#C9A227"/>
+                    {/* hebras — columna */}
+                    {[36,39,42,45,48,51,54,57].map((x,i) => (
+                      <line key={i}
+                        x1={x} y1="-10"
+                        x2={x + (-3.5 + i)} y2="22"
+                        stroke={i%2===0 ? "#C9A227" : "#E8C96A"}
+                        strokeWidth="2" strokeLinecap="round"
+                        opacity={0.72 + i*0.035}/>
+                    ))}
+                    {/* punta de la borla */}
+                    <ellipse cx="46" cy="23" rx="14" ry="5" fill="#C9A227" opacity="0.75"/>
+                    <ellipse cx="46" cy="21" rx="10" ry="3.5" fill="#E8C96A" opacity="0.6"/>
+                  </g>
                 </svg>
               ) : (
                 <svg ref={svgRef} viewBox="-160 -430 320 540" aria-hidden="true">
