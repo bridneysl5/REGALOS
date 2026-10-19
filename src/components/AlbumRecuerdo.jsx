@@ -255,13 +255,13 @@ export default function AlbumRecuerdo({ codigo }) {
       hwCarRef.current.setAttribute('transform', `translate(${tx},0)`);
     }
 
-    // Animación birrete graduación
+    // Animación sobre de graduación — flap se abre rotando hacia atrás
     if (gradCapRef.current) {
-      const elev = limitar((p - 0.1) / 0.9, 0, 1);
-      const sway = presionandoRef.current ? Math.sin(Date.now() / 120) * 6 : 0;
-      const ty = -elev * 80;
-      const rot = elev * 15 + sway;
-      gradCapRef.current.setAttribute('transform', `translate(${sway},${ty}) rotate(${rot})`);
+      // El flap pivotea en y=-80 (borde superior del cuerpo del sobre)
+      // Rota de 0° (cerrado) a -172° (completamente abierto)
+      const abreFlap = limitar(p * 1.18, 0, 1);
+      const angulo = abreFlap * -172;
+      gradCapRef.current.setAttribute('transform', `rotate(${angulo.toFixed(2)}, 0, -80)`);
     }
 
     if (medidorRef.current) medidorRef.current.style.width = `${p * 100}%`;
@@ -274,15 +274,15 @@ export default function AlbumRecuerdo({ codigo }) {
           : p < 0.999 ? '¡A toda velocidad!'
           : '¡Listo!')
         : grad
-        ? (p < 0.05 ? 'Mantén presionado para lanzar el birrete'
-          : p < 0.55 ? '¡Arriba, sube más!'
-          : p < 0.999 ? '¡Ya casi lo logras!'
-          : '¡Felicidades!')
+        ? (p < 0.05 ? 'Presiona y mantén para abrir el sobre'
+          : p < 0.45 ? '¡El sobre está abriendo…!'
+          : p < 0.999 ? '¡Ya casi, un poco más!'
+          : '¡Ábrelo!')
         : (p < 0.05 ? 'Mantén presionada la maceta'
           : p < 0.55 ? 'Sigue… está creciendo'
           : p < 0.999 ? 'Ya casi florece'
           : 'Floreció');
-      textoRef.current.classList.toggle('lista', p > 0.55);
+      textoRef.current.classList.toggle('lista', p > 0.45);
     }
   }, []);
 
@@ -512,13 +512,13 @@ export default function AlbumRecuerdo({ codigo }) {
   const ariaLabel = esHW
     ? 'Mantén presionado para arrancar el carro'
     : esGrad
-    ? 'Mantén presionado para lanzar el birrete'
+    ? 'Presiona y mantén para abrir el sobre de graduación'
     : 'Mantén presionado para hacer crecer la flor';
-  const btnLabel = esHW ? '¡Arrancar!' : esGrad ? '¡Lanzar!' : 'Abrir sin esperar';
+  const btnLabel = esHW ? '¡Arrancar!' : esGrad ? 'Abrir el sobre' : 'Abrir sin esperar';
   const instruccionInicial = esHW
     ? '¡Mantén presionado para arrancar!'
     : esGrad
-    ? 'Mantén presionado para lanzar el birrete'
+    ? 'Presiona y mantén para abrir el sobre'
     : 'Mantén presionada la maceta';
 
   // --- pantallas ------------------------------------------------------------
@@ -619,125 +619,111 @@ export default function AlbumRecuerdo({ codigo }) {
                   </g>
                 </svg>
               ) : esGrad ? (
-                <svg ref={svgRef} viewBox="-160 -340 320 460" aria-hidden="true">
-                  {/* ── FOCOS DE ESCENARIO ── */}
-                  <path d="M-140,-340 L-70,110 L-160,110 Z" fill="rgba(201,162,39,0.05)"/>
-                  <path d="M140,-340 L70,110 L160,110 Z"  fill="rgba(27,140,168,0.05)"/>
-                  <path d="M0,-340 L-40,110 L40,110 Z"    fill="rgba(201,162,39,0.04)"/>
+                /* ====== SOBRE DE GRADUACIÓN ====== */
+                <svg ref={svgRef} viewBox="-160 -280 320 430" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="envCuerpo" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0E2040"/>
+                      <stop offset="100%" stopColor="#040B1A"/>
+                    </linearGradient>
+                    <linearGradient id="envFlap" x1="0" y1="1" x2="0" y2="0">
+                      <stop offset="0%" stopColor="#091830"/>
+                      <stop offset="100%" stopColor="#0D2548"/>
+                    </linearGradient>
+                    <linearGradient id="selGold" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#E8C96A"/>
+                      <stop offset="50%" stopColor="#C9A227"/>
+                      <stop offset="100%" stopColor="#A8841C"/>
+                    </linearGradient>
+                    <linearGradient id="selInner" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#B8911E"/>
+                      <stop offset="100%" stopColor="#8A6B14"/>
+                    </linearGradient>
+                  </defs>
 
-                  {/* ── DIPLOMA IZQUIERDO ── */}
-                  <g transform="translate(-105,-20) rotate(-14)">
-                    <rect x="0" y="0" width="88" height="58" rx="3" fill="#0C1E38" stroke="#C9A227" strokeWidth="1.8"/>
-                    <ellipse cx="0"  cy="29" rx="9" ry="29" fill="#122540"/>
-                    <ellipse cx="88" cy="29" rx="9" ry="29" fill="#122540"/>
-                    <rect x="18" y="12" width="52" height="3"   rx="1" fill="#C9A227" opacity="0.9"/>
-                    <rect x="12" y="20" width="64" height="2"   rx="1" fill="#EEF3FF" opacity="0.28"/>
-                    <rect x="12" y="26" width="64" height="2"   rx="1" fill="#EEF3FF" opacity="0.22"/>
-                    <rect x="12" y="32" width="52" height="2"   rx="1" fill="#EEF3FF" opacity="0.18"/>
-                    <circle cx="44" cy="44" r="9" fill="none" stroke="#C9A227" strokeWidth="1.6"/>
-                    <text x="44" y="48" fontSize="9" fill="#C9A227" textAnchor="middle" opacity="0.85">★</text>
-                    {/* lazos */}
-                    <path d="M18,0 Q14,-6 18,-12 Q22,-6 18,0 Z" fill="#C9A227" opacity="0.7"/>
-                    <path d="M70,0 Q74,-6 70,-12 Q66,-6 70,0 Z" fill="#C9A227" opacity="0.7"/>
-                    <rect x="12" y="-4" width="64" height="5" rx="2" fill="#C9A227" opacity="0.55"/>
-                  </g>
+                  {/* Estrellas decorativas de fondo */}
+                  <text x="-148" y="-120" fontSize="10" fill="#C9A227" opacity="0.5">✦</text>
+                  <text x="128" y="-150" fontSize="8" fill="#C9A227" opacity="0.4">✦</text>
+                  <text x="-115" y="-230" fontSize="7" fill="#1B8CA8" opacity="0.45">★</text>
+                  <text x="98" y="-210" fontSize="9" fill="#C9A227" opacity="0.4">★</text>
+                  <text x="-50" y="-268" fontSize="6" fill="#C9A227" opacity="0.3">✦</text>
+                  <text x="62" y="-255" fontSize="7" fill="#1B8CA8" opacity="0.35">✦</text>
+                  <text x="140" y="-80" fontSize="6" fill="#C9A227" opacity="0.3">★</text>
+                  <text x="-142" y="-60" fontSize="8" fill="#C9A227" opacity="0.35">✦</text>
 
-                  {/* ── DIPLOMA DERECHO ── */}
-                  <g transform="translate(40,-10) rotate(11)">
-                    <rect x="0" y="0" width="76" height="50" rx="3" fill="#0C1E38" stroke="#C9A227" strokeWidth="1.5"/>
-                    <ellipse cx="0"  cy="25" rx="8" ry="25" fill="#122540"/>
-                    <ellipse cx="76" cy="25" rx="8" ry="25" fill="#122540"/>
-                    <rect x="14" y="10" width="48" height="2.5" rx="1" fill="#C9A227" opacity="0.85"/>
-                    <rect x="10" y="17" width="56" height="1.8" rx="1" fill="#EEF3FF" opacity="0.22"/>
-                    <rect x="10" y="23" width="56" height="1.8" rx="1" fill="#EEF3FF" opacity="0.18"/>
-                    <circle cx="38" cy="38" r="8" fill="none" stroke="#C9A227" strokeWidth="1.4"/>
-                    <text x="38" y="42" fontSize="8" fill="#C9A227" textAnchor="middle" opacity="0.8">★</text>
-                    <path d="M16,0 Q12,-5 16,-10 Q20,-5 16,0 Z" fill="#C9A227" opacity="0.65"/>
-                    <path d="M60,0 Q64,-5 60,-10 Q56,-5 60,0 Z" fill="#C9A227" opacity="0.65"/>
-                    <rect x="10" y="-3" width="56" height="4" rx="2" fill="#C9A227" opacity="0.5"/>
-                  </g>
+                  {/* Sombra del sobre */}
+                  <ellipse cx="3" cy="162" rx="108" ry="9" fill="rgba(0,0,0,0.55)"/>
 
-                  {/* ── ESTRELLAS ESTÁTICAS ── */}
-                  <text x="-148" y="-160" fontSize="13" fill="#C9A227" opacity="0.5">✦</text>
-                  <text x="126"  y="-200" fontSize="10" fill="#E8C96A" opacity="0.45">✦</text>
-                  <text x="-120" y="-260" fontSize="8"  fill="#EEF3FF" opacity="0.3">★</text>
-                  <text x="108"  y="-280" fontSize="11" fill="#C9A227" opacity="0.4">★</text>
-                  <text x="-50"  y="-310" fontSize="7"  fill="#1B8CA8" opacity="0.4">✦</text>
-                  <text x="36"   y="-295" fontSize="9"  fill="#C9A227" opacity="0.35">✦</text>
+                  {/* ===== CUERPO DEL SOBRE ===== */}
+                  <rect x="-130" y="-80" width="260" height="238" rx="10" fill="url(#envCuerpo)"/>
 
-                  {/* ── ESTRADO / ESCENARIO ── */}
-                  <rect x="-140" y="96"  width="280" height="16" rx="4" fill="#0D1F3C"/>
-                  <rect x="-140" y="96"  width="280" height="5"  rx="2" fill="#1B4A6B" opacity="0.7"/>
-                  <rect x="-120" y="106" width="240" height="6"       fill="#0A1628"/>
-                  {/* líneas del piso */}
-                  {[-100,-60,-20,20,60,100].map((x,i) => (
-                    <line key={i} x1={x} y1="101" x2={x} y2="112" stroke="#1B4A6B" strokeWidth="0.8" opacity="0.4"/>
-                  ))}
+                  {/* Pliegues internos decorativos */}
+                  <path d="M-130,-80 L0,38 L130,-80" fill="none" stroke="#C9A227" strokeWidth="1" opacity="0.2"/>
+                  <path d="M-130,158 L0,38 L130,158" fill="none" stroke="#C9A227" strokeWidth="1" opacity="0.2"/>
+                  <path d="M-130,-80 L-130,158 L0,38 Z" fill="rgba(4,11,26,0.3)"/>
+                  <path d="M130,-80 L130,158 L0,38 Z" fill="rgba(4,11,26,0.3)"/>
 
-                  {/* ── BIRRETE PRINCIPAL (animado) ── */}
-                  <g ref={gradCapRef}>
-                    {/* sombra en el suelo */}
-                    <ellipse cx="0" cy="98" rx="56" ry="9" fill="rgba(0,0,0,0.38)"/>
+                  {/* Borde dorado exterior */}
+                  <rect x="-130" y="-80" width="260" height="238" rx="10" fill="none" stroke="#C9A227" strokeWidth="2.2"/>
+                  {/* Borde interior sutil */}
+                  <rect x="-124" y="-74" width="248" height="226" rx="7" fill="none" stroke="#C9A227" strokeWidth="0.7" opacity="0.3"/>
 
-                    {/* CILINDRO — cara lateral oscura */}
-                    <ellipse cx="0" cy="76" rx="28" ry="11" fill="#08162A"/>
-                    <rect x="-28" y="30" width="56" height="46" fill="#0D1F3C"/>
-                    {/* CILINDRO — cara frontal */}
-                    <ellipse cx="0" cy="30" rx="28" ry="11" fill="#162E52"/>
-                    {/* anillos dorados */}
-                    <ellipse cx="0" cy="30" rx="28" ry="11" fill="none" stroke="#C9A227" strokeWidth="3"/>
-                    <ellipse cx="0" cy="76" rx="28" ry="11" fill="none" stroke="#C9A227" strokeWidth="2.2"/>
-                    {/* costillas verticales del cilindro */}
-                    <line x1="-28" y1="30" x2="-28" y2="76" stroke="#C9A227" strokeWidth="1.8" opacity="0.45"/>
-                    <line x1="28"  y1="30" x2="28"  y2="76" stroke="#C9A227" strokeWidth="1.8" opacity="0.45"/>
-                    {/* brillo interno del cilindro */}
-                    <ellipse cx="0" cy="30" rx="18" ry="6" fill="rgba(238,243,255,0.07)"/>
+                  {/* Sello de graduación central */}
+                  <circle cx="0" cy="54" r="36" fill="rgba(201,162,39,0.06)" stroke="#C9A227" strokeWidth="1.4" strokeDasharray="4,3.2" opacity="0.65"/>
+                  <circle cx="0" cy="54" r="28" fill="rgba(201,162,39,0.09)"/>
 
-                    {/* TABLA — cara inferior (profundidad) */}
-                    <polygon points="-92,24  92,24  86,36 -86,36" fill="#08162A"/>
-                    {/* TABLA — cara superior */}
-                    <rect x="-90" y="-14" width="180" height="38" rx="4" fill="#0F2A4A"/>
-                    {/* brillo superior */}
-                    <rect x="-90" y="-14" width="180" height="10" rx="4" fill="#162E52"/>
-                    {/* borde dorado grueso */}
-                    <rect x="-90" y="-14" width="180" height="38" rx="4" fill="none" stroke="#C9A227" strokeWidth="4"/>
-                    {/* borde interior fino */}
-                    <rect x="-82" y="-6"  width="164" height="22" rx="2" fill="none" stroke="#C9A227" strokeWidth="1" opacity="0.35"/>
-                    {/* esquinas decorativas doradas */}
-                    <circle cx="-90" cy="-14" r="5.5" fill="#C9A227"/>
-                    <circle cx="90"  cy="-14" r="5.5" fill="#C9A227"/>
-                    <circle cx="-90" cy="24"  r="5.5" fill="#C9A227"/>
-                    <circle cx="90"  cy="24"  r="5.5" fill="#C9A227"/>
-                    <circle cx="-90" cy="-14" r="2.5" fill="#E8C96A"/>
-                    <circle cx="90"  cy="-14" r="2.5" fill="#E8C96A"/>
-                    <circle cx="-90" cy="24"  r="2.5" fill="#E8C96A"/>
-                    <circle cx="90"  cy="24"  r="2.5" fill="#E8C96A"/>
-
-                    {/* BOTÓN CENTRAL */}
-                    <circle cx="0" cy="5" r="11" fill="#C9A227"/>
-                    <circle cx="0" cy="5" r="7.5" fill="#E8C96A"/>
-                    <circle cx="0" cy="5" r="4"   fill="#C9A227"/>
-                    <circle cx="-2" cy="3" r="2"  fill="#F5DFA0"/>
-
-                    {/* BORLA — cordón principal */}
-                    <path d="M0,5 Q22,-2 44,-20" stroke="#C9A227" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
-                    <path d="M0,5 Q22,-2 44,-20" stroke="#E8C96A" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.6"/>
-                    {/* nudo */}
-                    <circle cx="44" cy="-20" r="10" fill="#C9A227"/>
-                    <circle cx="44" cy="-20" r="6.5" fill="#E8C96A"/>
-                    <circle cx="44" cy="-20" r="3"   fill="#C9A227"/>
-                    {/* hebras — columna */}
-                    {[36,39,42,45,48,51,54,57].map((x,i) => (
-                      <line key={i}
-                        x1={x} y1="-10"
-                        x2={x + (-3.5 + i)} y2="22"
-                        stroke={i%2===0 ? "#C9A227" : "#E8C96A"}
-                        strokeWidth="2" strokeLinecap="round"
-                        opacity={0.72 + i*0.035}/>
+                  {/* Birrete mini dentro del sello */}
+                  <g transform="translate(0, 52)">
+                    <rect x="-16" y="-7" width="32" height="5.5" rx="1.5" fill="#C9A227"/>
+                    <rect x="-6.5" y="-1.5" width="13" height="10" rx="2" fill="#C9A227" opacity="0.75"/>
+                    <circle cx="0" cy="-8" r="3.8" fill="#E8C96A"/>
+                    <circle cx="0" cy="-8" r="2.2" fill="#C9A227"/>
+                    <line x1="0" y1="-8" x2="15" y2="-15" stroke="#C9A227" strokeWidth="1.6" strokeLinecap="round"/>
+                    <circle cx="15" cy="-16" r="3.2" fill="#C9A227"/>
+                    <circle cx="15" cy="-16" r="1.8" fill="#E8C96A"/>
+                    {[12,15,18].map((x,i) => (
+                      <line key={i} x1="15" y1="-13" x2={x} y2="-4" stroke={i%2===0?'#E8C96A':'#C9A227'} strokeWidth="1.1" strokeLinecap="round"/>
                     ))}
-                    {/* punta de la borla */}
-                    <ellipse cx="46" cy="23" rx="14" ry="5" fill="#C9A227" opacity="0.75"/>
-                    <ellipse cx="46" cy="21" rx="10" ry="3.5" fill="#E8C96A" opacity="0.6"/>
+                  </g>
+
+                  {/* "Para [nombre]" en el sobre */}
+                  <text x="0" y="103" fontSize="11" fill="#C9A227" textAnchor="middle"
+                        fontFamily="Georgia,'Times New Roman',serif" fontStyle="italic" opacity="0.8">
+                    {`Para ${momento.nombre || 'ti'}`}
+                  </text>
+                  <line x1="-45" y1="110" x2="45" y2="110" stroke="#C9A227" strokeWidth="0.8" opacity="0.35"/>
+                  <text x="0" y="132" fontSize="7" fill="#EEF3FF" textAnchor="middle"
+                        fontFamily="Arial,sans-serif" letterSpacing="2.5" opacity="0.25">
+                    MOMENTOS 365
+                  </text>
+
+                  {/* ===== FLAP DEL SOBRE — pivota en (0, -80) ===== */}
+                  <g ref={gradCapRef}>
+                    {/* Forma del flap */}
+                    <path d="M-130,-80 L0,-240 L130,-80 Z" fill="url(#envFlap)"/>
+                    {/* Borde dorado del flap */}
+                    <path d="M-130,-80 L0,-240 L130,-80" fill="none" stroke="#C9A227" strokeWidth="2.2" strokeLinejoin="round"/>
+                    {/* Borde interior sutil */}
+                    <path d="M-122,-80 L0,-228 L122,-80" fill="none" stroke="#C9A227" strokeWidth="0.7" opacity="0.3" strokeLinejoin="round"/>
+
+                    {/* Sello de cera */}
+                    <circle cx="1" cy="-149" r="23" fill="rgba(0,0,0,0.35)"/>
+                    <circle cx="0" cy="-150" r="23" fill="url(#selGold)"/>
+                    <circle cx="0" cy="-150" r="18.5" fill="url(#selInner)"/>
+                    <circle cx="0" cy="-150" r="14" fill="#C9A227" opacity="0.35"/>
+                    <text x="0" y="-144" fontSize="16" fill="#040B1A" textAnchor="middle"
+                          fontFamily="Georgia,'Times New Roman',serif" fontWeight="bold" fontStyle="italic">M</text>
+                    {/* Rayos decorativos del sello */}
+                    {Array.from({length:8},(_,i)=>{
+                      const a=(i*Math.PI*2/8)-Math.PI/2;
+                      const r1=24, r2=28;
+                      return <line key={i}
+                        x1={(Math.cos(a)*r1).toFixed(1)} y1={(-150+Math.sin(a)*r1).toFixed(1)}
+                        x2={(Math.cos(a)*r2).toFixed(1)} y2={(-150+Math.sin(a)*r2).toFixed(1)}
+                        stroke="#C9A227" strokeWidth="1.5" opacity="0.6"/>;
+                    })}
+                    {/* Reflejo sutil en el flap */}
+                    <path d="M-38,-195 Q0,-240 38,-195" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="28"/>
                   </g>
                 </svg>
               ) : (
