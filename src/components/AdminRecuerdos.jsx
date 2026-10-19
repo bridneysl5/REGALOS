@@ -290,24 +290,24 @@ export default function AdminRecuerdos() {
                 <span className="block text-xs font-bold text-gray-500 mb-1">N.° de pedido o nota interna</span>
                 <input value={form.pedido} onChange={(e) => setForm({ ...form, pedido: e.target.value })}
                        placeholder="Pedido 128 · ramo girasoles"
-                       className="w-full px-3 py-2 border border-gray-200 rounded-xl" />
+                       className="w-full px-3 py-2 border border-gray-200 rounded-xl text-gray-900 bg-white" />
               </label>
               <label className="text-sm">
                 <span className="block text-xs font-bold text-gray-500 mb-1">Nombre que aparece en el álbum</span>
                 <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                        placeholder="Valeria"
-                       className="w-full px-3 py-2 border border-gray-200 rounded-xl" />
+                       className="w-full px-3 py-2 border border-gray-200 rounded-xl text-gray-900 bg-white" />
               </label>
               <label className="text-sm">
                 <span className="block text-xs font-bold text-gray-500 mb-1">De parte de (opcional)</span>
                 <input value={form.deParte} onChange={(e) => setForm({ ...form, deParte: e.target.value })}
                        placeholder="Andrés"
-                       className="w-full px-3 py-2 border border-gray-200 rounded-xl" />
+                       className="w-full px-3 py-2 border border-gray-200 rounded-xl text-gray-900 bg-white" />
               </label>
               <label className="text-sm">
                 <span className="block text-xs font-bold text-gray-500 mb-1">Canción</span>
                 <select value={form.cancion} onChange={(e) => setForm({ ...form, cancion: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl bg-white">
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl text-gray-900 bg-white">
                   <option value="">Sin música</option>
                   {MUSICA.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
                 </select>
@@ -315,7 +315,7 @@ export default function AdminRecuerdos() {
               <label className="text-sm">
                 <span className="block text-xs font-bold text-gray-500 mb-1">Temática de la tarjeta</span>
                 <select value={form.tema} onChange={(e) => setForm({ ...form, tema: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl bg-white">
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl text-gray-900 bg-white">
                   <option value="" disabled>— Seleccionar —</option>
                   <option value="flores">🌻 Flores Amarillas</option>
                   <option value="hotwheels">🚗 Hot Wheels</option>
@@ -327,7 +327,7 @@ export default function AdminRecuerdos() {
                 <textarea rows="2" value={form.dedicatoria}
                           onChange={(e) => setForm({ ...form, dedicatoria: e.target.value })}
                           placeholder="Gracias por tanto. Que nunca te falten flores amarillas."
-                          className="w-full px-3 py-2 border border-gray-200 rounded-xl" />
+                          className="w-full px-3 py-2 border border-gray-200 rounded-xl text-gray-900 bg-white" />
               </label>
             </div>
 
