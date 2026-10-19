@@ -23,7 +23,7 @@ import {
   urlDelMomento,
 } from '../recuerdos';
 
-const VACIO = { pedido: '', nombre: '', deParte: '', dedicatoria: '', cancion: '', tema: 'flores' };
+const VACIO = { pedido: '', nombre: '', deParte: '', dedicatoria: '', cancion: '', tema: '' };
 
 const fecha = (ts) => {
   const d = ts?.toDate ? ts.toDate() : null;
@@ -108,7 +108,7 @@ export default function AdminRecuerdos() {
     setForm({
       pedido: m.pedido || '', nombre: m.nombre || '', deParte: m.deParte || '',
       dedicatoria: m.dedicatoria || '', cancion: m.cancion || (MUSICA[0]?.id ?? ''),
-      tema: m.tema || 'flores',
+      tema: m.tema || '',
     });
     setFotos([]);
     setPrevias([]);
@@ -316,8 +316,9 @@ export default function AdminRecuerdos() {
                 <span className="block text-xs font-bold text-gray-500 mb-1">Temática de la tarjeta</span>
                 <select value={form.tema} onChange={(e) => setForm({ ...form, tema: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-200 rounded-xl bg-white">
+                  <option value="" disabled>— Seleccionar —</option>
                   <option value="flores">🌻 Flores Amarillas</option>
-                  <option value="hotwheels">🏎️ Hot Wheels</option>
+                  <option value="hotwheels">🚗 Hot Wheels</option>
                 </select>
               </label>
               <label className="text-sm sm:col-span-2">
