@@ -177,7 +177,7 @@ export default function AdminRecuerdos() {
             <span className="block text-xs font-bold text-gray-500 mb-1">Códigos en blanco</span>
             <input type="number" min="1" max="60" value={cantidadLote}
                    onChange={(e) => setCantidadLote(e.target.value)}
-                   className="w-24 px-3 py-2 border border-gray-200 rounded-xl" />
+                   className="w-24 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 bg-white" />
           </label>
           <button onClick={generarLote}
                   className="px-5 py-2.5 font-bold rounded-xl bg-white text-gray-700 border border-gray-200 hover:bg-gray-50">
