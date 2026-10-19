@@ -225,13 +225,13 @@ export default function AdminRecuerdos() {
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-mono font-bold text-lg tracking-widest">{m.id}</span>
+                <span className="font-mono font-bold text-lg tracking-widest text-gray-900">{m.id}</span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${m.estado === 'listo' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                   {m.estado === 'listo' ? 'ENTREGADO' : 'LIBRE'}
                 </span>
                 {(m.tema && m.tema !== 'flores') && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
-                    {m.tema === 'hotwheels' ? '🏎️ Hot Wheels' : m.tema}
+                    {m.tema === 'hotwheels' ? '🚗 Hot Wheels' : m.tema}
                   </span>
                 )}
               </div>
@@ -280,7 +280,7 @@ export default function AdminRecuerdos() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Momento</p>
-                <p className="font-mono font-bold text-2xl tracking-widest">{editando}</p>
+                <p className="font-mono font-bold text-2xl tracking-widest text-gray-900">{editando}</p>
               </div>
               {qrs[editando] && <img src={qrs[editando]} alt="" className="w-20 h-20" />}
             </div>
