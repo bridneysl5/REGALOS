@@ -319,6 +319,7 @@ export default function AdminRecuerdos() {
                   <option value="" disabled>— Seleccionar —</option>
                   <option value="flores">🌻 Flores Amarillas</option>
                   <option value="hotwheels">🚗 Hot Wheels</option>
+                  <option value="graduacion">🎓 Graduación</option>
                 </select>
               </label>
               <label className="text-sm sm:col-span-2">

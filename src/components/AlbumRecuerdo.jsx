@@ -124,6 +124,22 @@ const ESTILOS_HW = `
 .m365-reproductor{background:rgba(26,0,0,.93)}
 `;
 
+const ESTILOS_GRAD = `
+.m365-momento{
+  --noche:#040B1A; --superficie:#0A1628; --sol:#C9A227; --sol-claro:#E8C96A;
+  --ambar:#1B8CA8; --crema:#EEF3FF; --crema-60:rgba(220,230,255,.65);
+  --crema-30:rgba(200,220,255,.28);
+  background:
+    radial-gradient(120% 80% at 50% -10%, #0D1F44 0%, rgba(13,31,68,0) 60%),
+    radial-gradient(90% 60% at 90% 110%, #0A1F38 0%, rgba(10,31,56,0) 70%),
+    radial-gradient(60% 40% at 10% 40%, #071428 0%, rgba(7,20,40,0) 80%),
+    var(--noche);
+}
+.m365-reproductor{background:rgba(4,11,26,.95)}
+.m365-visor{border-color:rgba(201,162,39,.3)}
+.m365-punto[aria-current="true"]{background:var(--sol);border-color:var(--sol)}
+`;
+
 export default function AlbumRecuerdo({ codigo }) {
   const [estado, setEstado] = useState('cargando'); // cargando | nohay | libre | listo
   const [momento, setMomento] = useState(null);
@@ -148,7 +164,9 @@ export default function AlbumRecuerdo({ codigo }) {
   const abiertoRef = useRef(false);
   const petalosRef = useRef([]);
   const hwCarRef = useRef(null);
+  const gradCapRef = useRef(null);
   const esHWRef = useRef(false);
+  const esGradRef = useRef(false);
   const botonRef = useRef(null);
 
   const quieto = typeof window !== 'undefined'
@@ -156,7 +174,9 @@ export default function AlbumRecuerdo({ codigo }) {
 
   const cancion = momento ? cancionPorId(momento.cancion) : null;
   const esHW = momento?.tema === 'hotwheels';
+  const esGrad = momento?.tema === 'graduacion';
   esHWRef.current = esHW;
+  esGradRef.current = esGrad;
   const fotos = momento?.fotos || [];
 
   // --- tipografías y datos --------------------------------------------------
@@ -235,14 +255,29 @@ export default function AlbumRecuerdo({ codigo }) {
       hwCarRef.current.setAttribute('transform', `translate(${tx},0)`);
     }
 
+    // Animación birrete graduación
+    if (gradCapRef.current) {
+      const elev = limitar((p - 0.1) / 0.9, 0, 1);
+      const sway = presionandoRef.current ? Math.sin(Date.now() / 120) * 6 : 0;
+      const ty = -elev * 80;
+      const rot = elev * 15 + sway;
+      gradCapRef.current.setAttribute('transform', `translate(${sway},${ty}) rotate(${rot})`);
+    }
+
     if (medidorRef.current) medidorRef.current.style.width = `${p * 100}%`;
     if (textoRef.current) {
       const hw = esHWRef.current;
+      const grad = esGradRef.current;
       textoRef.current.textContent = hw
         ? (p < 0.05 ? '¡Mantén presionado para arrancar!'
           : p < 0.55 ? '¡Sigue, acelera!'
           : p < 0.999 ? '¡A toda velocidad!'
           : '¡Listo!')
+        : grad
+        ? (p < 0.05 ? 'Mantén presionado para lanzar el birrete'
+          : p < 0.55 ? '¡Arriba, sube más!'
+          : p < 0.999 ? '¡Ya casi lo logras!'
+          : '¡Felicidades!')
         : (p < 0.05 ? 'Mantén presionada la maceta'
           : p < 0.55 ? 'Sigue… está creciendo'
           : p < 0.999 ? 'Ya casi florece'
@@ -306,26 +341,44 @@ export default function AlbumRecuerdo({ codigo }) {
     };
   }, [estado, abierto, pintar, abrirAlbum]);
 
-  // --- pétalos de fondo -----------------------------------------------------
+  // --- partículas de fondo --------------------------------------------------
   const lluvia = () => {
     if (quieto) return;
     for (let i = 0; i < 26; i++) {
-      petalosRef.current.push(nuevoPetalo(-20 - Math.random() * 140, true));
+      petalosRef.current.push(nuevoElemento(-20 - Math.random() * 140, true));
     }
   };
-  const nuevoPetalo = (y, rapido) => ({
-    x: Math.random() * window.innerWidth,
-    y: y === undefined ? Math.random() * window.innerHeight : y,
-    r: 3 + Math.random() * 6,
-    vy: (rapido ? 0.9 : 0.16) + Math.random() * (rapido ? 1.4 : 0.42),
-    vx: -0.22 + Math.random() * 0.44,
-    giro: Math.random() * Math.PI * 2,
-    vgiro: -0.008 + Math.random() * 0.016,
-    tono: esHW
-      ? (Math.random() < 0.5 ? '220,30,30' : '255,210,74')
-      : (Math.random() < 0.35 ? '255,233,168' : '255,210,74'),
-    alfa: 0.16 + Math.random() * 0.34,
-  });
+
+  const nuevoElemento = (y, rapido) => {
+    const hw = esHWRef.current;
+    const grad = esGradRef.current;
+    let tono, forma;
+    if (hw) {
+      tono = Math.random() < 0.5 ? '220,30,30' : '255,215,0';
+      forma = Math.random() < 0.5 ? 'chispa' : 'chispa2';
+    } else if (grad) {
+      const r = Math.random();
+      if (r < 0.45) { tono = '201,162,39'; forma = 'confeti'; }
+      else if (r < 0.72) { tono = '100,160,220'; forma = 'confeti'; }
+      else if (r < 0.88) { tono = '255,255,255'; forma = 'estrella'; }
+      else { tono = '201,162,39'; forma = 'birrete'; }
+    } else {
+      tono = Math.random() < 0.35 ? '255,233,168' : '255,210,74';
+      forma = 'petalo';
+    }
+    return {
+      x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 400),
+      y: y === undefined ? Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 800) : y,
+      r: 3 + Math.random() * 6,
+      vy: (rapido ? 0.9 : 0.16) + Math.random() * (rapido ? 1.4 : 0.42),
+      vx: hw ? (-0.8 + Math.random() * 1.6) : (-0.22 + Math.random() * 0.44),
+      giro: Math.random() * Math.PI * 2,
+      vgiro: hw ? (-0.06 + Math.random() * 0.12) : (-0.008 + Math.random() * 0.016),
+      tono,
+      forma,
+      alfa: hw ? (0.5 + Math.random() * 0.45) : (0.16 + Math.random() * 0.34),
+    };
+  };
 
   useEffect(() => {
     if (estado === 'cargando') return;
@@ -342,30 +395,78 @@ export default function AlbumRecuerdo({ codigo }) {
     };
     const sembrar = () => {
       const n = Math.round(Math.min(38, Math.max(14, w / 30)));
-      petalosRef.current = Array.from({ length: n }, () => nuevoPetalo());
+      petalosRef.current = Array.from({ length: n }, () => nuevoElemento());
     };
-    const pintarPetalos = () => {
+
+    const dibujarEstrella = (ctx, r) => {
+      const puntas = 5;
+      const inr = r * 0.4;
+      ctx.beginPath();
+      for (let i = 0; i < puntas * 2; i++) {
+        const ang = (i * Math.PI) / puntas - Math.PI / 2;
+        const rad = i % 2 === 0 ? r : inr;
+        i === 0 ? ctx.moveTo(Math.cos(ang) * rad, Math.sin(ang) * rad)
+                : ctx.lineTo(Math.cos(ang) * rad, Math.sin(ang) * rad);
+      }
+      ctx.closePath();
+    };
+
+    const dibujarBirrete = (ctx, r) => {
+      // Tabla cuadrada del birrete
+      ctx.beginPath();
+      ctx.rect(-r * 1.2, -r * 1.2, r * 2.4, r * 0.6);
+      ctx.fill();
+      // Base cilíndrica
+      ctx.beginPath();
+      ctx.rect(-r * 0.5, -r * 0.6, r, r * 0.7);
+      ctx.fill();
+    };
+
+    const pintarElementos = () => {
       ctx.clearRect(0, 0, w, h);
       for (const p of petalosRef.current) {
-        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.giro);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.giro);
         ctx.fillStyle = `rgba(${p.tono},${p.alfa})`;
-        ctx.beginPath(); ctx.ellipse(0, 0, p.r * 0.55, p.r * 1.25, 0, 0, Math.PI * 2); ctx.fill();
+        if (p.forma === 'petalo') {
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.r * 0.55, p.r * 1.25, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.forma === 'chispa') {
+          // Chispa rectangular alargada (HW spark)
+          ctx.fillRect(-p.r * 0.2, -p.r * 1.4, p.r * 0.4, p.r * 2.8);
+        } else if (p.forma === 'chispa2') {
+          // Chispa diagonal cruzada
+          ctx.fillRect(-p.r * 1.5, -p.r * 0.18, p.r * 3, p.r * 0.36);
+        } else if (p.forma === 'confeti') {
+          ctx.fillRect(-p.r * 0.7, -p.r * 0.7, p.r * 1.4, p.r * 1.4);
+        } else if (p.forma === 'estrella') {
+          dibujarEstrella(ctx, p.r * 0.9);
+          ctx.fill();
+        } else if (p.forma === 'birrete') {
+          ctx.globalAlpha = p.alfa;
+          dibujarBirrete(ctx, p.r * 0.7);
+        }
         ctx.restore();
       }
     };
     const animar = () => {
+      const hw = esHWRef.current;
       for (const p of petalosRef.current) {
-        p.y += p.vy; p.x += p.vx + Math.sin(p.y / 90) * 0.22; p.giro += p.vgiro;
+        p.y += p.vy;
+        p.x += p.vx + (hw ? 0 : Math.sin(p.y / 90) * 0.22);
+        p.giro += p.vgiro;
         if (p.y - p.r > h) { p.y = -p.r * 2; p.x = Math.random() * w; }
         if (p.x < -20) p.x = w + 20;
         if (p.x > w + 20) p.x = -20;
       }
       if (petalosRef.current.length > 64) petalosRef.current = petalosRef.current.slice(-58);
-      pintarPetalos();
+      pintarElementos();
       id = requestAnimationFrame(animar);
     };
 
-    medir(); sembrar(); pintarPetalos();
+    medir(); sembrar(); pintarElementos();
     if (!quieto) id = requestAnimationFrame(animar);
     window.addEventListener('resize', medir);
     return () => { cancelAnimationFrame(id); window.removeEventListener('resize', medir); };
@@ -406,6 +507,19 @@ export default function AlbumRecuerdo({ codigo }) {
       <a className="m365-btn" href={waPedido} target="_blank" rel="noopener noreferrer">Pedir el mío</a>
     </div>
   );
+
+  const temaLabel = esHW ? '🚗 Hot Wheels' : esGrad ? '🎓 Graduación' : 'Flores amarillas';
+  const ariaLabel = esHW
+    ? 'Mantén presionado para arrancar el carro'
+    : esGrad
+    ? 'Mantén presionado para lanzar el birrete'
+    : 'Mantén presionado para hacer crecer la flor';
+  const btnLabel = esHW ? '¡Arrancar!' : esGrad ? '¡Lanzar!' : 'Abrir sin esperar';
+  const instruccionInicial = esHW
+    ? '¡Mantén presionado para arrancar!'
+    : esGrad
+    ? 'Mantén presionado para lanzar el birrete'
+    : 'Mantén presionada la maceta';
 
   // --- pantallas ------------------------------------------------------------
   if (estado === 'cargando') {
@@ -448,6 +562,7 @@ export default function AlbumRecuerdo({ codigo }) {
     <div className="m365-momento">
       <style>{ESTILOS}</style>
       {esHW && <style>{ESTILOS_HW}</style>}
+      {esGrad && <style>{ESTILOS_GRAD}</style>}
       <canvas className="m365-lienzo-petalos" ref={lienzoRef} aria-hidden="true" />
 
       <div className="m365-marco">
@@ -457,7 +572,7 @@ export default function AlbumRecuerdo({ codigo }) {
             <p className="m365-para">{momento.nombre || 'Para ti'}</p>
 
             <button ref={botonRef} className="m365-maceta" type="button"
-                    aria-label={esHW ? 'Mantén presionado para arrancar el carro' : 'Mantén presionado para hacer crecer la flor'} touch-action="none">
+                    aria-label={ariaLabel} touch-action="none">
               {esHW ? (
                 <svg ref={svgRef} viewBox="-160 -100 320 200" aria-hidden="true">
                   {/* Pista */}
@@ -503,6 +618,57 @@ export default function AlbumRecuerdo({ codigo }) {
                     <circle cx="52" cy="44" r="2.5" fill="#111"/>
                   </g>
                 </svg>
+              ) : esGrad ? (
+                <svg ref={svgRef} viewBox="-160 -300 320 400" aria-hidden="true">
+                  {/* Fondo diplomas decorativos */}
+                  <ellipse cx="-90" cy="90" rx="28" ry="36" fill="rgba(201,162,39,0.08)" transform="rotate(-18,-90,90)"/>
+                  <ellipse cx="90" cy="80" rx="22" ry="30" fill="rgba(27,140,168,0.08)" transform="rotate(14,90,80)"/>
+                  {/* Estrado / base */}
+                  <rect x="-110" y="85" width="220" height="14" rx="4" fill="#0D1B33"/>
+                  <rect x="-110" y="85" width="220" height="4" rx="2" fill="#1B4A6B"/>
+                  <rect x="-90" y="93" width="180" height="6" fill="#0A1628"/>
+                  {/* Birrete animado */}
+                  <g ref={gradCapRef}>
+                    {/* Sombra bajo el birrete */}
+                    <ellipse cx="0" cy="88" rx="42" ry="7" fill="rgba(0,0,0,0.35)"/>
+                    {/* Tallo/base del birrete */}
+                    <rect x="-10" y="30" width="20" height="58" rx="4" fill="#1A1A2E"/>
+                    <rect x="-12" y="52" width="24" height="36" rx="3" fill="#16213E"/>
+                    {/* Tabla del birrete */}
+                    <rect x="-54" y="16" width="108" height="20" rx="5" fill="#0F3460"/>
+                    <rect x="-54" y="16" width="108" height="6" rx="3" fill="#1B5E8C"/>
+                    <rect x="-50" y="20" width="100" height="12" rx="3" fill="#0F3460"/>
+                    {/* Borde dorado del birrete */}
+                    <rect x="-54" y="14" width="108" height="4" rx="2" fill="#C9A227"/>
+                    <rect x="-54" y="32" width="108" height="3" rx="1" fill="#C9A227" opacity="0.6"/>
+                    {/* Boton superior */}
+                    <circle cx="0" cy="16" r="6" fill="#C9A227"/>
+                    <circle cx="0" cy="16" r="3" fill="#E8C96A"/>
+                    {/* Borla / tassel */}
+                    <line x1="0" y1="16" x2="44" y2="-10" stroke="#C9A227" strokeWidth="2.5" strokeLinecap="round"/>
+                    <circle cx="44" cy="-14" r="5" fill="#C9A227"/>
+                    <line x1="44" y1="-9" x2="36" y2="12" stroke="#E8C96A" strokeWidth="1.8" strokeLinecap="round"/>
+                    <line x1="44" y1="-9" x2="44" y2="14" stroke="#C9A227" strokeWidth="1.8" strokeLinecap="round"/>
+                    <line x1="44" y1="-9" x2="52" y2="12" stroke="#E8C96A" strokeWidth="1.8" strokeLinecap="round"/>
+                    {/* Fleco de la borla */}
+                    {[34,38,42,46,50,54].map((x,i) => (
+                      <line key={i} x1={x} y1="14" x2={x-2+i} y2="28" stroke="#C9A227" strokeWidth="1.2" strokeLinecap="round" opacity="0.8"/>
+                    ))}
+                  </g>
+                  {/* Estrellas decorativas estáticas */}
+                  <text x="-120" y="-40" fontSize="14" fill="#C9A227" opacity="0.6">✦</text>
+                  <text x="100" y="-60" fontSize="10" fill="#1B8CA8" opacity="0.5">✦</text>
+                  <text x="-100" y="-120" fontSize="8" fill="#C9A227" opacity="0.4">★</text>
+                  <text x="80" y="-140" fontSize="12" fill="#C9A227" opacity="0.5">★</text>
+                  {/* Diploma decorativo */}
+                  <rect x="-46" y="-200" width="92" height="66" rx="4" fill="#0A1628" stroke="#C9A227" strokeWidth="1.5" opacity="0.7"/>
+                  <rect x="-38" y="-192" width="76" height="4" rx="1" fill="#C9A227" opacity="0.5"/>
+                  <rect x="-38" y="-184" width="60" height="2.5" rx="1" fill="#EEF3FF" opacity="0.3"/>
+                  <rect x="-38" y="-178" width="70" height="2.5" rx="1" fill="#EEF3FF" opacity="0.2"/>
+                  <rect x="-38" y="-172" width="50" height="2.5" rx="1" fill="#EEF3FF" opacity="0.2"/>
+                  <circle cx="0" cy="-152" r="10" fill="none" stroke="#C9A227" strokeWidth="1.5" opacity="0.6"/>
+                  <text x="0" y="-148" fontSize="10" fill="#C9A227" textAnchor="middle" opacity="0.7">★</text>
+                </svg>
               ) : (
                 <svg ref={svgRef} viewBox="-160 -430 320 540" aria-hidden="true">
                   <path ref={talloRef} d={RUTA_TALLO} fill="none" stroke="#4C8C5F"
@@ -535,13 +701,13 @@ export default function AlbumRecuerdo({ codigo }) {
             </button>
 
             <div className="m365-medidor" aria-hidden="true"><i ref={medidorRef} /></div>
-            <p className="m365-instruccion" ref={textoRef}>{esHW ? '¡Mantén presionado para arrancar!' : 'Mantén presionada la maceta'}</p>
-            <button className="m365-btn" type="button" onClick={abrirAlbum}>{esHW ? '¡Arrancar!' : 'Abrir sin esperar'}</button>
+            <p className="m365-instruccion" ref={textoRef}>{instruccionInicial}</p>
+            <button className="m365-btn" type="button" onClick={abrirAlbum}>{btnLabel}</button>
           </div>
         ) : (
           <div className="m365-album">
             <div>
-              <p className="m365-eyebrow" style={{ textAlign: 'center' }}>{esHW ? '🏎️ Hot Wheels' : 'Flores amarillas'}</p>
+              <p className="m365-eyebrow" style={{ textAlign: 'center' }}>{temaLabel}</p>
               <h1 className="m365-titulo">Para <em>{momento.nombre || 'ti'}</em></h1>
             </div>
 
@@ -573,7 +739,7 @@ export default function AlbumRecuerdo({ codigo }) {
             </div>
 
             {momento.dedicatoria && (
-              <p className="m365-dedicatoria">“{momento.dedicatoria}”</p>
+              <p className="m365-dedicatoria">"{momento.dedicatoria}"</p>
             )}
             {momento.deParte && <p className="m365-firma">De {momento.deParte}</p>}
 
