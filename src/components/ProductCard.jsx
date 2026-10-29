@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, ShoppingBag } from 'lucide-react';
+import { Eye, ShoppingBag, Sparkles } from 'lucide-react';
 import { hasPrice, formatPrice } from '../pricing';
 
 const ProductCard = ({ product, addToCart, setSelectedProduct }) => {
@@ -32,10 +32,16 @@ const ProductCard = ({ product, addToCart, setSelectedProduct }) => {
         />
         
         {/* Top Left Badge */}
-        <div className="absolute top-4 left-4">
+        <div className="absolute top-4 left-4 flex flex-col items-start">
           <span className={`${getBadgeStyle(product.category)} text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-full tracking-wider`}>
             {getBadgeText(product.category)}
           </span>
+          {/* Productos que incluyen o aceptan realidad aumentada (campo ra: true) */}
+          {product.ra && (
+            <span className="mt-2 bg-white text-rose-500 text-[10px] sm:text-[11px] font-extrabold px-2.5 py-1.5 rounded-full tracking-wide shadow-sm flex items-center gap-1 w-max">
+              <Sparkles size={12} className="text-amber-500" strokeWidth={2.5} /> CON REALIDAD AUMENTADA
+            </span>
+          )}
         </div>
 
         {/* Top Right Eye Button */}

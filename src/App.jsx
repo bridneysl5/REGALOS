@@ -21,7 +21,8 @@ import {
   Settings,
   Share2,
   Check,
-  Car
+  Car,
+  PlayCircle
 } from 'lucide-react';
 
 import { ALL_PRODUCTS } from './data';
@@ -29,6 +30,8 @@ import ProductCard from './components/ProductCard';
 import Filters from './components/Filters';
 import ProductGrid from './components/ProductGrid';
 import MouseHearts from './components/MouseHearts';
+import CelularCamara from './components/CelularCamara';
+import ComoFunciona from './components/ComoFunciona';
 // Páginas que la mayoría de visitantes nunca abre: se descargan solo cuando
 // se entra a ellas, así la tienda carga más liviana.
 const Admin = lazy(() => import('./components/Admin'));
@@ -422,43 +425,65 @@ const App = () => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-rose-100/40 rounded-full blur-3xl -z-10 mix-blend-multiply"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/4 -translate-y-1/4 w-[400px] h-[400px] bg-amber-50/40 rounded-full blur-3xl -z-10"></div>
 
-          <div className="relative text-center px-4 mb-8 z-10">
+          <div className="relative text-center px-4 z-10">
             <h1 className="text-6xl md:text-8xl font-black text-gray-900 tracking-tight mb-2">Regalos</h1>
-            <h2 className="text-5xl md:text-7xl font-bold italic text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-amber-500 pr-2">Inolvidables</h2>
+            <h2 className="text-5xl md:text-7xl font-bold italic text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-amber-500 pr-2 pb-2">que cobran vida</h2>
+            <p className="mt-2 text-base md:text-lg text-gray-500">
+              Personalizados y con <span className="font-bold text-rose-500">realidad aumentada</span>
+            </p>
           </div>
 
-          {/* Image Slider */}
-          <div className="relative w-72 h-96 md:w-80 md:h-[420px] z-10 mt-4">
-            {sliderImages.map((img, index) => (
-              <div
-                key={index}
-                className={`absolute inset-0 transition-all duration-1000 ease-in-out origin-bottom ${currentSlide === index
-                    ? 'opacity-100 scale-100 rotate-[-3deg] translate-y-0 z-20'
-                    : 'opacity-0 scale-95 rotate-3 translate-y-4 z-10'
-                  }`}
-              >
-                <img
-                  src={img}
-                  alt={`Slide ${index + 1}`}
-                  className="w-full h-full object-cover rounded-3xl border-[12px] md:border-[16px] border-white shadow-xl"
-                  loading={index === 0 ? 'eager' : 'lazy'}
-                  fetchPriority={index === 0 ? 'high' : 'low'}
-                  decoding="async"
-                />
-              </div>
-            ))}
+          {/* Carrusel + celular-cámara encima (animado) */}
+          <div className="relative z-10 mt-16 md:mt-28 w-[350px] h-[400px] md:w-[480px] md:h-[470px]">
+            <div className="absolute left-[10px] top-5 w-[250px] h-[340px] md:left-10 md:w-80 md:h-[420px]">
+              {sliderImages.map((img, index) => (
+                <div
+                  key={index}
+                  className={`absolute inset-0 transition-all duration-1000 ease-in-out origin-bottom ${currentSlide === index
+                      ? 'opacity-100 scale-100 rotate-[-3deg] translate-y-0 z-20'
+                      : 'opacity-0 scale-95 rotate-3 translate-y-4 z-10'
+                    }`}
+                >
+                  <img
+                    src={img}
+                    alt={`Slide ${index + 1}`}
+                    className="w-full h-full object-cover rounded-3xl border-[12px] md:border-[16px] border-white shadow-xl"
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    fetchPriority={index === 0 ? 'high' : 'low'}
+                    decoding="async"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="absolute left-[125px] top-10 md:left-[170px] md:top-2.5">
+              <CelularCamara />
+            </div>
           </div>
 
-          <button
-            onClick={() =>
-              campanaVigente()
-                ? navigateToShop('occasion', CAMPANA_OCASION)
-                : navigateToShop('category', 'Todos')
-            }
-            className="mt-12 bg-gray-900 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-rose-500 hover:scale-105 transition-all shadow-xl z-10 flex items-center gap-2"
-          >
-            Explorar Catálogo <ChevronRight />
-          </button>
+          <div className="relative z-10 mt-10 md:mt-12 flex flex-col sm:flex-row gap-3 w-full sm:w-auto px-6 sm:px-0">
+            <button
+              onClick={() =>
+                campanaVigente()
+                  ? navigateToShop('occasion', CAMPANA_OCASION)
+                  : navigateToShop('category', 'Todos')
+              }
+              className="bg-gray-900 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-rose-500 hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-2"
+            >
+              Ver catálogo <ChevronRight />
+            </button>
+            <button
+              onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-white border-2 border-gray-900 text-gray-900 px-7 py-4 rounded-full font-bold text-lg hover:bg-gray-900 hover:text-white transition-all flex items-center justify-center gap-2"
+            >
+              <PlayCircle size={20} /> Ver cómo funciona
+            </button>
+          </div>
+
+          <div className="relative z-10 mt-6 flex items-center gap-2 text-sm md:text-base font-bold text-gray-700">
+            Escanea <ChevronRight size={14} className="text-gray-300" />
+            Apunta <ChevronRight size={14} className="text-gray-300" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-amber-500 font-extrabold">¡Sorpréndete!</span>
+          </div>
         </section>
 
         {/* Featured Categories (Circular) */}
@@ -516,6 +541,8 @@ const App = () => {
             </div>
           </div>
         </section>
+
+        <ComoFunciona />
 
         {/* Featured Products */}
         <section className="py-16 max-w-7xl mx-auto px-4">
