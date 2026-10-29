@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, lazy, Suspense } from 'react';
 import {
   ShoppingBag,
   Heart,
@@ -29,9 +29,17 @@ import ProductCard from './components/ProductCard';
 import Filters from './components/Filters';
 import ProductGrid from './components/ProductGrid';
 import MouseHearts from './components/MouseHearts';
-import Admin from './components/Admin';
-import LinksView from './components/LinksView';
-import AlbumRecuerdo from './components/AlbumRecuerdo';
+// Páginas que la mayoría de visitantes nunca abre: se descargan solo cuando
+// se entra a ellas, así la tienda carga más liviana.
+const Admin = lazy(() => import('./components/Admin'));
+const LinksView = lazy(() => import('./components/LinksView'));
+const AlbumRecuerdo = lazy(() => import('./components/AlbumRecuerdo'));
+
+const Cargando = () => (
+  <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="w-10 h-10 rounded-full border-4 border-rose-200 border-t-rose-500 animate-spin" />
+  </div>
+);
 import {
   CATEGORIES,
   OCCASIONS,
@@ -40,8 +48,8 @@ import {
   findProductBySlug,
 } from './routes';
 import { hasPrice, formatPrice, pricedTotal, hasUnpricedItems } from './pricing';
-import { subscribeOverrides, applyOverrides } from './catalogOverrides';
-import { subscribeProductosRegalos, mergeCatalogo } from './productosFirebase';
+// Solo las funciones puras; la conexión a Firebase se carga después (ver abajo).
+import { applyOverrides, mergeCatalogo } from './catalogo';
 import { campanaVigente, CAMPANA_OCASION } from './campana';
 import { actualizarSeo } from './seo';
 
@@ -49,20 +57,34 @@ const App = () => {
   const [firebaseProducts, setFirebaseProducts] = useState([]);
   const [firebaseLoaded, setFirebaseLoaded] = useState(false);
 
-  useEffect(() => {
-    const unsub = subscribeProductosRegalos((docs) => {
-      setFirebaseProducts(docs);
-      setFirebaseLoaded(true);
-    });
-    return () => unsub();
-  }, []);
-
   // Ediciones hechas en /admin y guardadas en Firebase
   const [catalogOverrides, setCatalogOverrides] = useState({});
 
+  // Firebase se descarga DESPUÉS de mostrar la página (import dinámico): la
+  // tienda aparece al instante con el catálogo de src/data.js y, apenas llega
+  // Firebase, se actualiza sola con precios y productos de allí (igual que antes).
   useEffect(() => {
-    const unsub = subscribeOverrides(setCatalogOverrides);
-    return () => unsub();
+    let activo = true;
+    const cancelar = [];
+    Promise.all([import('./productosFirebase'), import('./catalogOverrides')])
+      .then(([productos, ediciones]) => {
+        if (!activo) return;
+        cancelar.push(
+          productos.subscribeProductosRegalos((docs) => {
+            setFirebaseProducts(docs);
+            setFirebaseLoaded(true);
+          }),
+          ediciones.subscribeOverrides(setCatalogOverrides)
+        );
+      })
+      .catch((e) => {
+        console.error('[catalogo] no se pudo cargar Firebase:', e);
+        if (activo) setFirebaseLoaded(true);
+      });
+    return () => {
+      activo = false;
+      cancelar.forEach((fn) => fn());
+    };
   }, []);
 
   // El catálogo de Firebase (lo que administras en admin-ventas) manda; de
@@ -290,7 +312,7 @@ const App = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
-            <img src="/images/logo.png" alt="Momentos 365 Logo" className="w-20 h-20 object-contain" />
+            <img src="/images/logo-160.webp" alt="Momentos 365 Logo" width="80" height="80" className="w-20 h-20 object-contain" />
             <span className="text-xl font-bold font-serif text-[#ce293b] italic">Momentos365</span>
           </div>
 
@@ -419,7 +441,9 @@ const App = () => {
                   src={img}
                   alt={`Slide ${index + 1}`}
                   className="w-full h-full object-cover rounded-3xl border-[12px] md:border-[16px] border-white shadow-xl"
-                  loading="lazy"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  fetchPriority={index === 0 ? 'high' : 'low'}
+                  decoding="async"
                 />
               </div>
             ))}
@@ -678,7 +702,7 @@ const App = () => {
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-white">
-            <img src="/images/logo.png" alt="Momentos 365 Logo" className="w-8 h-8 object-contain bg-white rounded-md p-1" />
+            <img src="/images/logo-160.webp" alt="Momentos 365 Logo" width="32" height="32" loading="lazy" className="w-8 h-8 object-contain bg-white rounded-md p-1" />
             <span className="text-xl font-bold">Momentos 365</span>
           </div>
           <p className="text-sm leading-relaxed">
@@ -723,18 +747,28 @@ const App = () => {
   );
 
   if (view === 'admin') {
-    return <Admin />;
+    return (
+      <Suspense fallback={<Cargando />}>
+        <Admin />
+      </Suspense>
+    );
   }
 
   if (view === 'momento') {
-    return <AlbumRecuerdo codigo={window.location.pathname.split('/')[2] || ''} />;
+    return (
+      <Suspense fallback={<Cargando />}>
+        <AlbumRecuerdo codigo={window.location.pathname.split('/')[2] || ''} />
+      </Suspense>
+    );
   }
 
   if (view === 'links') {
     return (
       <div className="min-h-screen bg-white font-sans text-gray-900 relative overflow-hidden">
         <MouseHearts />
-        <LinksView />
+        <Suspense fallback={<Cargando />}>
+          <LinksView />
+        </Suspense>
       </div>
     );
   }

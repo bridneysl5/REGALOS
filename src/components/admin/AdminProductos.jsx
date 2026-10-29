@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Edit2, Trash2, X, Save, Calculator, ChevronDown, ChevronUp, Search, Upload, Image } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../firebase';
+import { storage } from '../../firebaseStorage';
 import { subscribeInventario } from '../../adminFirebase';
 import {
   subscribeProductosAdmin,

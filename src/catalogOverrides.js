@@ -13,6 +13,9 @@
 import { collection, doc, deleteDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { actualizarProducto, normalizarNombre } from './productosFirebase';
+import { CAMPOS_EDITABLES, applyOverrides } from './catalogo';
+
+export { CAMPOS_EDITABLES, applyOverrides };
 
 export const OVERRIDES_COLLECTION = 'catalogoRegalos';
 
@@ -22,18 +25,6 @@ export const OVERRIDES_COLLECTION = 'catalogoRegalos';
  * en el propio producto de Firebase, para que admin-ventas vea lo mismo.
  */
 export const CAMPOS_SOLO_WEB = ['isTop', 'isCheap', 'description'];
-
-/** Campos que el admin puede editar y guardar. */
-export const CAMPOS_EDITABLES = [
-  'name',
-  'price',
-  'category',
-  'occasion',
-  'isTop',
-  'isCheap',
-  'description',
-  'details',
-];
 
 const comoLista = (valor) => {
   if (Array.isArray(valor)) return valor.filter((v) => String(v).trim() !== '');
@@ -69,20 +60,6 @@ export const subscribeOverrides = (onChange, onError) =>
       if (onError) onError(error);
     }
   );
-
-/** Aplica las ediciones guardadas sobre el catálogo base. */
-export const applyOverrides = (products, overrides) => {
-  if (!overrides || Object.keys(overrides).length === 0) return products;
-  return products.map((p) => {
-    const ov = overrides[String(p.id)];
-    if (!ov) return p;
-    const merged = { ...p };
-    CAMPOS_EDITABLES.forEach((campo) => {
-      if (ov[campo] !== undefined && ov[campo] !== null) merged[campo] = ov[campo];
-    });
-    return merged;
-  });
-};
 
 /** Guarda (o actualiza) la edición de un producto en la colección de la web. */
 export const saveOverride = (product, campos = CAMPOS_EDITABLES) => {
