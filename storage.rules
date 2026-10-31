@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// ---------------------------------------------------------------------------
+// Reglas de Firebase Storage (fotos de productos).
+// Cualquiera puede VER las fotos; solo el equipo del panel puede subirlas o
+// borrarlas, y solo imágenes de menos de 5 MB.
+//
+// Publicar: Firebase Console → Storage → Reglas → pegar → Publicar.
+// ---------------------------------------------------------------------------
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function esEquipo() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/usuarios_admin/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/usuarios_admin/$(request.auth.uid)).data.get('activo', true) != false;
+    }
+
+    match /productos/{archivo} {
+      allow read: if true;
+      allow create, update: if esEquipo()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if esEquipo();
+    }
+  }
+}

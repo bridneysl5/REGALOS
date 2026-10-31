@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
-  Search, X, ShoppingBag, Send, Phone, User, FileText, Heart,
-  Package, Plus, Minus, MapPin, Truck, ChevronDown, ChevronUp,
+  Search, X, ShoppingBag, Send, Phone, User,
+  Package, Plus, Minus, MapPin, Truck,
   CheckCircle2, Trash2,
 } from 'lucide-react';
 import { subscribeProductosAdmin } from '../../productosFirebase';
 import { registrarVenta } from '../../adminFirebase';
+import { ORIGENES } from './origenes';
 
 const OCASIONES = [
   'Todos','Cumpleaños','Graduación','Aniversarios y Parejas','Para Ella','Para Él',
@@ -22,7 +23,7 @@ function generarIdPedido() {
 /* ── Panel lateral del pedido ─────────────────────────────────────────────── */
 function PanelPedido({ items, onQuitar, onCantidad, vendedor, onLimpiar }) {
   const [form, setForm] = useState({
-    cliente: '', telefono: '', direccion: '',
+    cliente: '', telefono: '', direccion: '', origen: 'whatsapp',
     delivery: false, precioDelivery: '',
     de: '', para: '', dedicatoria: '', notas: '',
   });
@@ -49,6 +50,7 @@ function PanelPedido({ items, onQuitar, onCantidad, vendedor, onLimpiar }) {
         cliente: form.cliente,
         telefono: form.telefono,
         direccion: form.direccion,
+        origen: form.origen,
         delivery: { incluye: form.delivery, precio: costoDelivery },
         notas: form.notas,
         dedicatoria: { de: form.de, para: form.para, mensaje: form.dedicatoria },
@@ -89,7 +91,7 @@ function PanelPedido({ items, onQuitar, onCantidad, vendedor, onLimpiar }) {
 
   const resetear = () => {
     setPedidoCreado(null);
-    setForm({ cliente: '', telefono: '', direccion: '', delivery: false, precioDelivery: '', de: '', para: '', dedicatoria: '', notas: '' });
+    setForm({ cliente: '', telefono: '', direccion: '', origen: 'whatsapp', delivery: false, precioDelivery: '', de: '', para: '', dedicatoria: '', notas: '' });
     onLimpiar();
   };
 
@@ -180,6 +182,13 @@ function PanelPedido({ items, onQuitar, onCantidad, vendedor, onLimpiar }) {
             <input value={form.direccion} onChange={e => set('direccion', e.target.value)}
               placeholder="Dirección"
               className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-9 pr-3 py-2.5 text-white text-sm outline-none focus:border-blue-500"/>
+          </div>
+          <div className="relative">
+            <label className="text-gray-400 text-xs mb-1 block">¿Cómo llegó el cliente?</label>
+            <select value={form.origen} onChange={e => set('origen', e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-blue-500">
+              {ORIGENES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
           {/* Delivery toggle */}
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 space-y-2">

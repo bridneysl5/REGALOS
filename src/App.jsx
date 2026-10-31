@@ -32,6 +32,7 @@ import ProductGrid from './components/ProductGrid';
 import MouseHearts from './components/MouseHearts';
 import CelularCamara from './components/CelularCamara';
 import ComoFunciona from './components/ComoFunciona';
+import Footer from './components/Footer';
 // Páginas que la mayoría de visitantes nunca abre: se descargan solo cuando
 // se entra a ellas, así la tienda carga más liviana.
 const Admin = lazy(() => import('./components/Admin'));
@@ -55,6 +56,11 @@ import { hasPrice, formatPrice, pricedTotal, hasUnpricedItems } from './pricing'
 import { applyOverrides, mergeCatalogo } from './catalogo';
 import { campanaVigente, CAMPANA_OCASION } from './campana';
 import { actualizarSeo } from './seo';
+import { abrirWhatsApp } from './whatsapp';
+import { detectarOrigen } from './origen';
+
+// Se anota de dónde llegó el visitante apenas entra (Instagram, TikTok, etc.).
+detectarOrigen();
 
 const App = () => {
   const [firebaseProducts, setFirebaseProducts] = useState([]);
@@ -301,13 +307,12 @@ const App = () => {
       ? `Por favor envíenme los detalles para consultar el precio y realizar el pago.`
       : `Por favor envíenme los detalles para realizar el pago.`;
 
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/51916098803?text=${encodedMessage}`, '_blank');
+    abrirWhatsApp(message, { tipo: 'pedido', items: cart, total: cartPricedTotal });
   };
 
   const sendWhatsAppInquiry = () => {
     const message = "Hola MOMENTOS, me gustaría hacer una consulta.";
-    window.open(`https://wa.me/51916098803?text=${encodeURIComponent(message)}`, '_blank');
+    abrirWhatsApp(message, { tipo: 'consulta' });
   };
 
   const Navbar = () => (
@@ -650,7 +655,7 @@ const App = () => {
           <button
             onClick={() => {
               const txt = 'Hola MOMENTOS 365, me interesa un paquete grupal (mínimo 10 unidades). ¿Me pueden dar información?';
-              window.open('https://wa.me/51916098803?text=' + encodeURIComponent(txt), '_blank');
+              abrirWhatsApp(txt, { tipo: 'paquete' });
             }}
             className="shrink-0 bg-[#FF2B5E] hover:bg-[#c0184a] text-white font-semibold px-5 py-2.5 rounded-xl transition text-sm flex items-center gap-2"
           >
@@ -724,55 +729,6 @@ const App = () => {
     );
   };
 
-  const Footer = () => (
-    <footer className="bg-gray-900 text-gray-400 py-16 border-t border-gray-800">
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-white">
-            <img src="/images/logo-160.webp" alt="Momentos 365 Logo" width="32" height="32" loading="lazy" className="w-8 h-8 object-contain bg-white rounded-md p-1" />
-            <span className="text-xl font-bold">Momentos 365</span>
-          </div>
-          <p className="text-sm leading-relaxed">
-            Hacemos que regalar sea una experiencia única. Detalles que emocionan y conectan corazones.
-          </p>
-          <div className="flex gap-4">
-            <span className="cursor-pointer hover:text-rose-500 transition font-bold">IG</span>
-            <span className="cursor-pointer hover:text-rose-500 transition font-bold">FB</span>
-          </div>
-        </div>
-        <div>
-          <h4 className="text-white font-bold mb-6">Explorar</h4>
-          <ul className="space-y-4 text-sm">
-            <li className="hover:text-rose-500 cursor-pointer transition">Nuevos Ingresos</li>
-            <li className="hover:text-rose-500 cursor-pointer transition">Los más vendidos</li>
-            <li className="hover:text-rose-500 cursor-pointer transition">Gift Cards</li>
-            <li className="hover:text-rose-500 cursor-pointer transition">Ofertas</li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="text-white font-bold mb-6">Ayuda</h4>
-          <ul className="space-y-4 text-sm">
-            <li className="hover:text-rose-500 cursor-pointer transition">Preguntas Frecuentes</li>
-            <li className="hover:text-rose-500 cursor-pointer transition">Políticas de Envío</li>
-            <li className="hover:text-rose-500 cursor-pointer transition">Rastrear mi pedido</li>
-            <li className="hover:text-rose-500 cursor-pointer transition">Contacto</li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="text-white font-bold mb-6">Newsletter</h4>
-          <p className="text-sm mb-4">Recibe 10% de descuento en tu primera compra.</p>
-          <div className="flex gap-2">
-            <input type="text" placeholder="Tu email" className="bg-gray-800 border-none rounded-lg px-4 py-2 w-full focus:ring-1 focus:ring-rose-500" />
-            <button className="bg-rose-500 text-white p-2 rounded-lg"><ChevronRight /></button>
-          </div>
-        </div>
-      </div>
-      <div className="max-w-7xl mx-auto px-4 mt-16 pt-8 border-t border-gray-800 text-center text-xs">
-        © 2024 Momentos 365. Todos los derechos reservados.
-      </div>
-    </footer>
-  );
-
   if (view === 'admin') {
     return (
       <Suspense fallback={<Cargando />}>
@@ -826,7 +782,7 @@ const App = () => {
 
       {view === 'home' ? <HomeView /> : view === 'packages' ? <PackagesView /> : <ShopView />}
 
-      <Footer />
+      <Footer onCategoria={(c) => navigateToShop('category', c)} onConsulta={sendWhatsAppInquiry} />
 
       {/* Floating Buttons */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-40">

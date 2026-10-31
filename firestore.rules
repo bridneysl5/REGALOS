@@ -1,0 +1,89 @@
+rules_version = '2';
+
+// ---------------------------------------------------------------------------
+// Reglas de seguridad de Firestore para Momentos365.
+//
+// IMPORTANTE: este proyecto de Firebase (admin-ventas-691ef) también lo usa la
+// app "admin-ventas". Antes de publicar estas reglas, asegúrate de que esa app
+// también inicie sesión con Firebase Authentication y de que sus usuarios
+// tengan perfil en usuarios_admin; si no, dejará de poder leer y guardar.
+// Las colecciones que no aparecen aquí quedan BLOQUEADAS.
+//
+// Cómo publicarlas: Firebase Console → Firestore Database → Reglas → pegar
+// este archivo → Publicar. (O con la CLI: firebase deploy --only firestore:rules)
+// ---------------------------------------------------------------------------
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Quién es quién ──────────────────────────────────────────────────────
+    function logueado() { return request.auth != null; }
+    function rutaPerfil() { return /databases/$(database)/documents/usuarios_admin/$(request.auth.uid); }
+    function tienePerfil() { return logueado() && exists(rutaPerfil()); }
+    function perfil() { return get(rutaPerfil()).data; }
+    function esEquipo() { return tienePerfil() && perfil().get('activo', true) != false; }
+    function esAdmin() { return esEquipo() && perfil().rol in ['owner', 'admin']; }
+    function esDueno() { return esEquipo() && perfil().rol == 'owner'; }
+
+    // ── Usuarios del panel ──────────────────────────────────────────────────
+    // Cada uno puede leer su propio perfil; admin y dueño ven la lista.
+    // Solo el dueño crea, edita o elimina perfiles (nadie puede subirse el rol).
+    match /usuarios_admin/{uid} {
+      allow read: if (logueado() && request.auth.uid == uid) || esAdmin();
+      allow write: if esDueno();
+    }
+
+    // ── Catálogo ────────────────────────────────────────────────────────────
+    // La tienda lee los productos de Regalos sin iniciar sesión.
+    // NOTA: los documentos incluyen costos y margen; quien sepa usar la consola
+    // del navegador puede verlos. Para ocultarlos habría que moverlos a otra
+    // colección privada (pendiente).
+    match /productos/{id} {
+      allow read: if resource.data.emprendimiento == 'Regalos' || esEquipo();
+      allow write: if esEquipo();
+    }
+
+    // Ediciones de la web (Top, Barato, descripción).
+    match /catalogoRegalos/{id} {
+      allow read: if true;
+      allow write: if esEquipo();
+    }
+
+    // ── Momentos QR ─────────────────────────────────────────────────────────
+    // Quien tiene el código puede abrir SU momento (get), pero no listar todos.
+    match /momentos/{codigo} {
+      allow get: if true;
+      allow list: if esEquipo();
+      allow write: if esEquipo();
+
+      match /fotos/{foto} {
+        allow read: if true;
+        allow write: if esEquipo();
+      }
+    }
+
+    // ── Operación interna: solo el equipo ───────────────────────────────────
+    match /ventas/{id} {
+      allow read, write: if esEquipo();
+    }
+
+    match /inventario/{id} {
+      allow read, write: if esEquipo();
+    }
+
+    // ── Pedidos iniciados desde la tienda (botones de WhatsApp) ────────────
+    // Cualquier visitante puede CREAR un registro con forma controlada;
+    // solo el equipo puede verlos, cambiarlos o borrarlos.
+    match /pedidos_web/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['tipo', 'items', 'total', 'origen', 'pagina', 'estado', 'creadoEn'])
+        && request.resource.data.tipo in ['pedido', 'consulta', 'paquete']
+        && request.resource.data.estado == 'nuevo'
+        && request.resource.data.creadoEn == request.time
+        && request.resource.data.items is list && request.resource.data.items.size() <= 40
+        && request.resource.data.total is number && request.resource.data.total >= 0 && request.resource.data.total < 100000
+        && request.resource.data.origen is string && request.resource.data.origen.size() <= 40
+        && request.resource.data.pagina is string && request.resource.data.pagina.size() <= 200;
+      allow read, update, delete: if esEquipo();
+    }
+  }
+}

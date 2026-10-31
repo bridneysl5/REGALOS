@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-  Search, CheckCircle2, Package, Phone, User, FileText, Heart,
+  Search, CheckCircle2, Package, Phone, User, Heart,
   Truck, Trash2, Edit2, Eye, X, Save,
-  DollarSign, MapPin,
+  MapPin,
 } from 'lucide-react';
 import { subscribeVentas, actualizarVenta, eliminarVenta } from '../../adminFirebase';
+import { ORIGENES, etiquetaOrigen } from './origenes';
 
 const ESTADOS = ['pendiente', 'haciendo', 'terminada', 'cancelada'];
 const estadoStyle = {
@@ -71,6 +72,7 @@ function ModalDetalle({ venta, onCerrar }) {
               {venta.cliente && <div className="flex items-center gap-2 text-gray-200 text-sm"><User size={14} className="text-gray-500"/>{venta.cliente}</div>}
               {venta.telefono && <div className="flex items-center gap-2 text-gray-200 text-sm"><Phone size={14} className="text-gray-500"/><a href={`tel:${venta.telefono}`} className="hover:text-blue-400">{venta.telefono}</a></div>}
               {venta.direccion && <div className="flex items-center gap-2 text-gray-200 text-sm"><MapPin size={14} className="text-gray-500"/>{venta.direccion}</div>}
+              {venta.origen && <div className="text-gray-400 text-xs">Llegó por: <span className="text-gray-200">{etiquetaOrigen(venta.origen)}</span></div>}
             </div>
           )}
 
@@ -105,6 +107,7 @@ function ModalEditar({ venta, onCerrar, onGuardado }) {
     cliente: venta.cliente || '',
     telefono: venta.telefono || '',
     direccion: venta.direccion || '',
+    origen: venta.origen || '',
     notas: venta.notas || '',
     adelanto: venta.adelanto || 0,
     estado: venta.estado || 'pendiente',
@@ -149,6 +152,14 @@ function ModalEditar({ venta, onCerrar, onGuardado }) {
             <label className="text-gray-400 text-xs mb-1 block">Dirección</label>
             <input value={form.direccion} onChange={e => set('direccion', e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500"/>
+          </div>
+          <div>
+            <label className="text-gray-400 text-xs mb-1 block">¿Cómo llegó el cliente?</label>
+            <select value={form.origen} onChange={e => set('origen', e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-blue-500">
+              <option value="">Sin dato</option>
+              {ORIGENES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

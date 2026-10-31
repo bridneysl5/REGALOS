@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Warehouse, PackagePlus, Calculator } from 'lucide-react';
 import { subscribeInventario, crearInsumo, actualizarInsumo, eliminarInsumo } from '../../adminFirebase';
 

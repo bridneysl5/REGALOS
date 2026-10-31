@@ -33,6 +33,7 @@ export const desdeFirebase = (id, data) => ({
   occasion: data.ocasion?.length ? data.ocasion : ['Todos'],
   img: data.imageUrl || '',
   details: data.detalles || [],
+  ra: !!data.realidadAumentada,
 });
 
 /** "/images/Flores Amarillas/x.webp" -> "https://momentos365.com/images/Flores%20Amarillas/x.webp" */
@@ -113,6 +114,7 @@ export const crearProductoRegalo = (datos) =>
     imageUrl: datos.imagen || '',
     paquete: !!datos.paquete,
     top: !!datos.destacado,
+    realidadAumentada: !!datos.ra,
     emprendimiento: EMPRENDIMIENTO,
     costo: datos.costo || null,
   });
@@ -128,6 +130,7 @@ export const actualizarProductoRegalo = (id, datos) =>
     imageUrl: datos.imagen || '',
     paquete: !!datos.paquete,
     top: !!datos.destacado,
+    realidadAumentada: !!datos.ra,
     ...(datos.costo !== undefined && { costo: datos.costo }),
   });
 
@@ -153,6 +156,7 @@ export const subscribeProductosAdmin = (onChange) =>
           imagen: data.imageUrl || '',
           paquete: !!data.paquete,
           destacado: !!data.top,
+          ra: !!data.realidadAumentada,
           costo: data.costo || null,
         });
       });

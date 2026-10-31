@@ -25,3 +25,6 @@ dist-ssr
 
 # Copias de respaldo locales
 *.bak-*
+
+# Respaldos que hace Claude antes de cambios grandes
+Claude outputs/respaldo-*/

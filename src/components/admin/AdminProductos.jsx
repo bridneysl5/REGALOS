@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, X, Save, Calculator, ChevronDown, ChevronUp, Search, Upload, Image } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Save, Calculator, ChevronDown, ChevronUp, Search, Upload, Image, Sparkles } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../firebaseStorage';
 import { subscribeInventario } from '../../adminFirebase';
@@ -147,7 +147,7 @@ function Calculadora({ insumos, onGuardar, inicial }) {
 function ModalProducto({ producto, insumos, onClose, onGuardar }) {
   const [form, setForm] = useState(producto ? { ...producto } : {
     nombre: '', descripcion: '', precio: '', moneda: 'S/',
-    categoria: '', imagen: '', ocasiones: [], paquete: false, destacado: false,
+    categoria: '', imagen: '', ocasiones: [], paquete: false, destacado: false, ra: false,
   });
   const [showCalc, setShowCalc] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -307,7 +307,7 @@ function ModalProducto({ producto, insumos, onClose, onGuardar }) {
           </div>
 
           {/* Flags */}
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={!!form.paquete} onChange={e => set('paquete', e.target.checked)} className="w-4 h-4 accent-pink-500"/>
               <span className="text-gray-300 text-sm">Es paquete</span>
@@ -315,6 +315,10 @@ function ModalProducto({ producto, insumos, onClose, onGuardar }) {
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={!!form.destacado} onChange={e => set('destacado', e.target.checked)} className="w-4 h-4 accent-yellow-500"/>
               <span className="text-gray-300 text-sm">Destacado (Top)</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={!!form.ra} onChange={e => set('ra', e.target.checked)} className="w-4 h-4 accent-rose-500"/>
+              <span className="text-gray-300 text-sm flex items-center gap-1"><Sparkles size={14} className="text-rose-400"/> Con realidad aumentada</span>
             </label>
           </div>
 
@@ -425,7 +429,7 @@ export default function AdminProductos() {
                         <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center text-gray-500 text-xs">IMG</div>
                       )}
                       <div>
-                        <p className="text-white font-medium leading-tight">{p.nombre}</p>
+                        <p className="text-white font-medium leading-tight flex items-center gap-1.5">{p.nombre}{p.ra && <Sparkles size={13} className="text-rose-400 shrink-0" aria-label="Con realidad aumentada"/>}</p>
                         <p className="text-gray-400 text-xs">{(p.ocasiones || []).slice(0,2).join(', ')}</p>
                       </div>
                     </div>

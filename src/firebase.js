@@ -1,7 +1,9 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-const firebaseConfig = {
+// Esta configuración es pública por diseño (va en todas las webs con Firebase).
+// La seguridad real está en las reglas: ver firestore.rules y storage.rules.
+export const firebaseConfig = {
   apiKey: "AIzaSyCZ2irwGhTw0HdTNYULS49Rl1sKoSBu68E",
   authDomain: "admin-ventas-691ef.firebaseapp.com",
   projectId: "admin-ventas-691ef",

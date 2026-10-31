@@ -1,5 +1,5 @@
 // Funciones Firebase para el panel de administración
-// Colecciones: usuarios_admin, inventario, ventas
+// Colecciones: usuarios_admin, inventario, ventas, pedidos_web
 
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
@@ -8,24 +8,16 @@ import {
 import { db } from './firebase';
 
 // ─── USUARIOS ──────────────────────────────────────────────────────────────
-export const subscribeUsuarios = (cb) => {
+// Las cuentas (correo + clave) las maneja Firebase Authentication: ver
+// adminAuth.js. Aquí solo está el perfil de cada uno (nombre, rol, activo),
+// guardado en usuarios_admin/{uid}.
+export const subscribeUsuarios = (cb, onError) => {
   const q = query(collection(db, 'usuarios_admin'), orderBy('nombre'));
-  return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+  return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onError);
 };
-export const crearUsuario = (datos) =>
-  addDoc(collection(db, 'usuarios_admin'), { ...datos, activo: true, creadoEn: serverTimestamp() });
 export const actualizarUsuario = (id, datos) =>
   updateDoc(doc(db, 'usuarios_admin', id), datos);
 export const eliminarUsuario = (id) => deleteDoc(doc(db, 'usuarios_admin', id));
-export const loginUsuario = (nombre, clave) =>
-  new Promise(resolve => {
-    const unsub = onSnapshot(query(collection(db, 'usuarios_admin')), snap => {
-      unsub();
-      const match = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .find(u => u.nombre?.toLowerCase() === nombre.toLowerCase() && u.clave === clave && u.activo !== false);
-      resolve(match || null);
-    });
-  });
 
 // ─── INVENTARIO ────────────────────────────────────────────────────────────
 export const subscribeInventario = (cb) => {
@@ -39,11 +31,22 @@ export const actualizarInsumo = (id, datos) =>
 export const eliminarInsumo = (id) => deleteDoc(doc(db, 'inventario', id));
 
 // ─── VENTAS ────────────────────────────────────────────────────────────────
-export const subscribeVentas = (cb) => {
+export const subscribeVentas = (cb, onError) => {
   const q = query(collection(db, 'ventas'), orderBy('creadoEn', 'desc'));
-  return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+  return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onError);
 };
 export const registrarVenta = (datos) =>
   addDoc(collection(db, 'ventas'), { cliente: '', telefono: '', items: [], total: 0, estado: 'pendiente', notas: '', ...datos, creadoEn: new Date(), fecha: serverTimestamp() });
 export const actualizarVenta = (id, datos) => updateDoc(doc(db, 'ventas', id), datos);
 export const eliminarVenta = (id) => deleteDoc(doc(db, 'ventas', id));
+
+// ─── PEDIDOS WEB ───────────────────────────────────────────────────────────
+// Cada vez que alguien toca "Enviar pedido por WhatsApp" (o consulta) en la
+// tienda, se guarda un registro aquí. Sirve para saber cuántos clientes
+// escriben y cuántos terminan comprando.
+export const subscribePedidosWeb = (cb, onError) => {
+  const q = query(collection(db, 'pedidos_web'), orderBy('creadoEn', 'desc'));
+  return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onError);
+};
+export const actualizarPedidoWeb = (id, datos) => updateDoc(doc(db, 'pedidos_web', id), datos);
+export const eliminarPedidoWeb = (id) => deleteDoc(doc(db, 'pedidos_web', id));
